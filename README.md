@@ -60,5 +60,5 @@ GetPlayerLastDetection(playerid, cheat_id);
 
 ## Credits
 * Atom - Programming
-* urShadow - Pawn.RakNet
-* leHeix - Provide help
+* [urShadow](https://github.com/urShadow) - [Pawn.RakNet](https://github.com/urShadow/Pawn.RakNet/)
+* [leHeix](https://github.com/leHeix) - Provide help
