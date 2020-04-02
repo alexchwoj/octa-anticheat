@@ -57,8 +57,9 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti invisible vehicle surfing
 * Anti invisible aim
 * Anti spec
+* Anti FakeBullets
 
 ## Credits
-* Atom - Programming
+* [Atom](https://github.com/RealAtom) - Programming
+* [leHeix](https://github.com/leHeix) - Provide help and programming
 * [urShadow](https://github.com/urShadow) - [Pawn.RakNet](https://github.com/urShadow/Pawn.RakNet/)
-* [leHeix](https://github.com/leHeix) - Provide help

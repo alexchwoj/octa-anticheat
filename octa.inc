@@ -145,7 +145,7 @@ new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
 /* Init */
 public OnGameModeInit()
 {
-	printf("Octa anti-cheat v"OCTA_VERSION" by Atom has been loaded");
+	printf("[-] Octa anti-cheat v"OCTA_VERSION" initialized successfully [-]");
 	
 	#if defined OT_OnGameModeInit
 		return OT_OnGameModeInit();
