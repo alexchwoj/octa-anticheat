@@ -15,9 +15,11 @@
 /* Config */
 #define OCTA_VERSION "0.0.1"
 
+/*
 #if !defined DEBUG
-	#define DEBUG
+	#define DEBUG 
 #endif
+*/
 
 #if !defined MAX_CHAT_FLOOD
 	#define MAX_CHAT_FLOOD			3
@@ -163,7 +165,7 @@ public OnGameModeInit()
 #endif
 
 /* Player Callbacks */
-public OnPlayerConnect(playerid)
+public OnPlayerDisconnect(playerid)
 {
 	for(new i = 0; i < sizeof(ANTICHEAT_INFO[]); i ++)
 	{
@@ -177,21 +179,21 @@ public OnPlayerConnect(playerid)
 		PLAYER_WEAPONS[playerid][i][w_valid] = false;
 	}
 
-	#if defined OT_OnPlayerConnect
-		return OT_OnPlayerConnect(playerid);
+	#if defined OT_OnPlayerDisconnect
+		return OT_OnPlayerDisconnect(playerid);
 	#else
 		return 1;
 	#endif
 }
-#if defined _ALS_OnPlayerConnect
-	#undef OnPlayerConnect
+#if defined _ALS_OnPlayerDisconnect
+	#undef OnPlayerDisconnect
 #else
-	#define _ALS_OnPlayerConnect
+	#define _ALS_OnPlayerDisconnect
 #endif
 
-#define OnPlayerConnect OT_OnPlayerConnect
-#if defined OT_OnPlayerConnect
-	forward OT_OnPlayerConnect(playerid);
+#define OnPlayerDisconnect OT_OnPlayerDisconnect
+#if defined OT_OnPlayerDisconnect
+	forward OT_OnPlayerDisconnect(playerid);
 #endif
 
 /* Utils */
@@ -317,7 +319,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 					return 0;
 				}
 	        }
-	        case 1538, 1539:
+	        case 1538, 1539, 1543:
 	        {
 	        	if (onFootData[PR_position][2] > 1.0)
 				{
@@ -338,11 +340,11 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	/* Speed Hack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEED][ac_enabled] == true && onFootData[PR_surfingVehicleId] > 0)
 	{
-		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK || IsPlayerInAnyVehicle(playerid)) return 1;
+		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK || IsPlayerInAnyVehicle(playerid) || onFootData[PR_animationId] == 1130) return 1;
 
-		new Float:speed = floatsqroot( floatpower(floatabs(onFootData[PR_position][0]), 2.0) + floatpower(floatabs(onFootData[PR_position][1]), 2.0) + floatpower(floatabs(onFootData[PR_position][2]), 2.0)) * 253.3;
+		new Float:speed = floatsqroot( floatpower(floatabs(onFootData[PR_velocity][0]), 2.0) + floatpower(floatabs(onFootData[PR_velocity][1]), 2.0) + floatpower(floatabs(onFootData[PR_velocity][2]), 2.0)) * 253.3;
 
-		if (speed > 41.0)
+		if (speed > 80.0)
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
