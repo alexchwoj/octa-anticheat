@@ -142,6 +142,60 @@ enum weapons_player
 };
 new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
 
+/* Init */
+public OnGameModeInit()
+{
+	printf("Octa anti-cheat v"OCTA_VERSION" by Atom has been loaded");
+	
+	#if defined OT_OnGameModeInit
+		return OT_OnGameModeInit();
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnGameModeInit
+	#undef OnGameModeInit
+#else
+	#define _ALS_OnGameModeInit
+#endif
+
+#define OnGameModeInit OT_OnGameModeInit
+#if defined OT_OnGameModeInit
+	forward OT_OnGameModeInit();
+#endif
+
+/* Player Callbacks */
+public OnPlayerConnect(playerid)
+{
+	for(new i = 0; i < sizeof(ANTICHEAT_INFO[]); i ++)
+	{
+		ANTICHEAT_PLAYER[playerid][i][pac_detections] = 0;
+		ANTICHEAT_PLAYER[playerid][i][pac_last_detection] = 0;
+		ANTICHEAT_PLAYER[playerid][i][pac_immunity] = false;
+	}
+
+	for(new i = 0; i < sizeof(PLAYER_WEAPONS[]); i ++)
+	{
+		PLAYER_WEAPONS[playerid][i][w_valid] = false;
+	}
+
+	#if defined OT_OnPlayerConnect
+		return OT_OnPlayerConnect(playerid);
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnPlayerConnect
+	#undef OnPlayerConnect
+#else
+	#define _ALS_OnPlayerConnect
+#endif
+
+#define OnPlayerConnect OT_OnPlayerConnect
+#if defined OT_OnPlayerConnect
+	forward OT_OnPlayerConnect(playerid);
+#endif
+
 /* Utils */
 stock GetWeaponSlot(weaponid)
 {
@@ -633,4 +687,4 @@ stock ot_SetPlayerArmedWeapon(playerid, weaponid)
 
 	SetPlayerArmedWeapon(playerid, weaponid);
 	return 1;
-} 
+}
