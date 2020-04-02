@@ -35,6 +35,8 @@ GetPlayerLastDetection(playerid, cheat_id);
 ```
 
 ## Features
+* Anti WeaponHack
+* Anti AmmoHack
 * Anti SpecialAction Hack
 * Anti fly
 * Anti UnFreeze
@@ -53,5 +55,5 @@ GetPlayerLastDetection(playerid, cheat_id);
 	- Request class
 	- Request spawn
 * Anti invisible vehicle surfing
-* Anti invisible aimbot
+* Anti invisible aim
 * Anti spec
