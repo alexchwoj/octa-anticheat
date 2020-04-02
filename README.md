@@ -26,6 +26,14 @@ public OnCheatDetected(playerid, cheat_id)
 }
 ```
 
+## Fuctions
+```pawn
+SetImmunityCheat(playerid, cheat_id, bool:immunity)
+GetImmunityCheat(playerid, cheat_id)
+GetPlayerDetections(playerid, cheat_id)
+GetPlayerLastDetection(playerid, cheat_id)
+```
+
 ## Features
 * Anti SpecialAction Hack
 * Anti fly
@@ -46,3 +54,4 @@ public OnCheatDetected(playerid, cheat_id)
 	- Request spawn
 * Anti invisible vehicle surfing
 * Anti invisible aimbot
+* Anti spec
