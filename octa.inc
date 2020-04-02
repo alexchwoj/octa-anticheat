@@ -633,4 +633,4 @@ stock ot_SetPlayerArmedWeapon(playerid, weaponid)
 
 	SetPlayerArmedWeapon(playerid, weaponid);
 	return 1;
-}
+} 
