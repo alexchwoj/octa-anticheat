@@ -47,6 +47,8 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti Crasher
 	- Invalid camera
 	- Bullet crasher
+	- Unoccupied crasher
+	- Enter crasher
 * Anti Flood
 	- Chat
 	- Deaths

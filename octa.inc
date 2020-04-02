@@ -50,7 +50,8 @@ const
 	PLAYER_SYNC = 207,
 	AIM_SYNC = 203,
 	WEAPONS_UPDATE_SYNC = 204,
-	BULLET_SYNC = 206
+	BULLET_SYNC = 206,
+	UNOCCUPIED_SYNC = 209
 ;
 
 enum
@@ -73,7 +74,9 @@ enum
 	CHEAT_SPEC,
 	CHEAT_WEAPON,
 	CHEAT_AMMO,
-	CHEAT_FAKEBULLET
+	CHEAT_FAKEBULLET,
+	CRASHER_UNOCCUPIED,
+	CRASHER_ENTER
 };
 
 enum ac_info
@@ -102,7 +105,9 @@ new ANTICHEAT_INFO[][ac_info] =
 	{"spec", true},
 	{"weapon", true},
 	{"ammo", true},
-	{"fake bullet", true}
+	{"fake bullet", true},
+	{"unoccupied crasher", true},
+	{"enter crasher", true}
 };
 
 enum ac_player
@@ -288,6 +293,35 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	BS_IgnoreBits(bs, 8);
 	BS_ReadOnFootSync(bs, onFootData);
 
+	printf(
+        "PLAYER_SYNC[%d]:\nlrKey %d \nudKey %d \nkeys %d \nposition: %.2f %.2f %.2f \nquaternion %.2f %.2f %.2f %.2f \nhealth %d \narmour %d \nadditionalKey %d \nweaponId %d \nspecialAction %d \nvelocity %.2f %.2f %.2f \nsurfingOffsets %.2f %.2f %.2f \nsurfingVehicleId %d \nanimationId %d \nanimationFlags %d",
+        playerid,
+        onFootData[PR_lrKey],
+        onFootData[PR_udKey],
+        onFootData[PR_keys],
+        onFootData[PR_position][0],
+        onFootData[PR_position][1],
+        onFootData[PR_position][2],
+        onFootData[PR_quaternion][0],
+        onFootData[PR_quaternion][1],
+        onFootData[PR_quaternion][2],
+        onFootData[PR_quaternion][3],
+        onFootData[PR_health],
+        onFootData[PR_armour],
+        onFootData[PR_additionalKey],
+        onFootData[PR_weaponId],
+        onFootData[PR_specialAction],
+        onFootData[PR_velocity][0],
+        onFootData[PR_velocity][1],
+        onFootData[PR_velocity][2],
+        onFootData[PR_surfingOffsets][0],
+        onFootData[PR_surfingOffsets][1],
+        onFootData[PR_surfingOffsets][2],
+        onFootData[PR_surfingVehicleId],
+        onFootData[PR_animationId],
+        onFootData[PR_animationFlags]
+    );
+
 	/* Special Action Hack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPECIAL_ACTION][ac_enabled] == true)
 	{
@@ -426,6 +460,22 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadAimSync(bs, aimData);
 
+    printf(
+        "AIM_SYNC[%d]:\ncamMode %d \ncamFrontVec %.2f %.2f %.2f \ncamPos %.2f %.2f %.2f \naimZ %.2f \nweaponState %d \ncamZoom %d \naspectRatio %d",
+        playerid,
+        aimData[PR_camMode],
+        aimData[PR_camFrontVec][0],
+        aimData[PR_camFrontVec][1],
+        aimData[PR_camFrontVec][2],
+        aimData[PR_camPos][0],
+        aimData[PR_camPos][1],
+        aimData[PR_camPos][2],
+        aimData[PR_aimZ],
+        aimData[PR_weaponState],
+        aimData[PR_camZoom],
+        aimData[PR_aspectRatio]
+    );
+
     /* Invalid Camera */
 	if (ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_CAMERA][ac_enabled] == true && aimData[PR_camMode] == 45 || aimData[PR_camMode] == 49)
 	{
@@ -451,6 +501,39 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
     
     BS_IgnoreBits(bs, 8);
     BS_ReadWeaponsUpdate(bs, weaponsUpdate);
+
+    printf(
+        "WEAPONS_UPDATE_SYNC[%d]:\ntargetId %d \ntargetActorId %d \nslotWeaponId %d %d %d %d %d %d %d %d %d %d %d %d %d \nslotWeaponAmmo %d %d %d %d %d %d %d %d %d %d %d %d %d",
+        playerid,
+        weaponsUpdate[PR_targetId],
+        weaponsUpdate[PR_targetActorId],
+        weaponsUpdate[PR_slotWeaponId][0],
+        weaponsUpdate[PR_slotWeaponId][1],
+        weaponsUpdate[PR_slotWeaponId][2],
+        weaponsUpdate[PR_slotWeaponId][3],
+        weaponsUpdate[PR_slotWeaponId][4],
+        weaponsUpdate[PR_slotWeaponId][5],
+        weaponsUpdate[PR_slotWeaponId][6],
+        weaponsUpdate[PR_slotWeaponId][7],
+        weaponsUpdate[PR_slotWeaponId][8],
+        weaponsUpdate[PR_slotWeaponId][9],
+        weaponsUpdate[PR_slotWeaponId][10],
+        weaponsUpdate[PR_slotWeaponId][11],
+        weaponsUpdate[PR_slotWeaponId][12],
+        weaponsUpdate[PR_slotWeaponAmmo][0],
+        weaponsUpdate[PR_slotWeaponAmmo][1],
+        weaponsUpdate[PR_slotWeaponAmmo][2],
+        weaponsUpdate[PR_slotWeaponAmmo][3],
+        weaponsUpdate[PR_slotWeaponAmmo][4],
+        weaponsUpdate[PR_slotWeaponAmmo][5],
+        weaponsUpdate[PR_slotWeaponAmmo][6],
+        weaponsUpdate[PR_slotWeaponAmmo][7],
+        weaponsUpdate[PR_slotWeaponAmmo][8],
+        weaponsUpdate[PR_slotWeaponAmmo][9],
+        weaponsUpdate[PR_slotWeaponAmmo][10],
+        weaponsUpdate[PR_slotWeaponAmmo][11],
+        weaponsUpdate[PR_slotWeaponAmmo][12]
+    );
 
     for (new i = 0; i < sizeof(PLAYER_WEAPONS); i++)
 	{
@@ -484,6 +567,23 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadBulletSync(bs, bulletData);
 
+    printf(
+        "BULLET_SYNC[%d]:\nhitType %d \nhitId %d \norigin %.2f %.2f %.2f \nhitPos %.2f %.2f %.2f \noffsets %.2f %.2f %.2f \nweaponId %d",
+        playerid,
+        bulletData[PR_hitType],
+        bulletData[PR_hitId],
+        bulletData[PR_origin][0],
+        bulletData[PR_origin][1],
+        bulletData[PR_origin][2],
+        bulletData[PR_hitPos][0],
+        bulletData[PR_hitPos][1],
+        bulletData[PR_hitPos][2],
+        bulletData[PR_offsets][0],
+        bulletData[PR_offsets][1],
+        bulletData[PR_offsets][2],
+        bulletData[PR_weaponId]
+    );
+
     if (ANTICHEAT_PLAYER[playerid][CHEAT_FAKEBULLET][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FAKEBULLET][ac_enabled] == true)
 	{
 		new slot = GetWeaponSlot(bulletData[PR_weaponId]);
@@ -492,6 +592,50 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
 			ot_ReturnCallback(playerid, CHEAT_FAKEBULLET);
 			return 0;
 		}
+	}
+    return 1;
+}
+
+IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
+{
+    new unoccupiedData[PR_UnoccupiedSync];
+ 
+    BS_IgnoreBits(bs, 8);
+    BS_ReadUnoccupiedSync(bs, unoccupiedData);
+ 
+    //thx https://vk.com/franzesco and https://vk.com/dataflex
+    if (ANTICHEAT_PLAYER[playerid][CRASHER_UNOCCUPIED][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_UNOCCUPIED][ac_enabled] == true)
+	{
+	    if ((floatabs(unoccupiedData[PR_roll][0]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_roll][1]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_roll][2]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_direction][0]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_direction][1]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_direction][2]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_position][0]) > 20000.0) ||
+	        (floatabs(unoccupiedData[PR_position][1]) > 20000.0) ||
+	        (floatabs(unoccupiedData[PR_position][2]) > 20000.0) ||
+	        (floatabs(unoccupiedData[PR_angularVelocity][0]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_angularVelocity][1]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_angularVelocity][2]) > 1.0) ||
+	        (floatabs(unoccupiedData[PR_velocity][0]) > 100.0) ||
+	        (floatabs(unoccupiedData[PR_velocity][1]) > 100.0) ||
+	        (floatabs(unoccupiedData[PR_velocity][2]) > 100.0)
+	    )
+	    {
+	        ot_ReturnCallback(playerid, CRASHER_UNOCCUPIED);
+			return 0;
+	    }
+	}
+
+	//thx f0Re3t and Nexius
+	if (ANTICHEAT_PLAYER[playerid][CRASHER_ENTER][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_ENTER][ac_enabled] == true)
+	{
+		if ((unoccupiedData[PR_roll][0] == unoccupiedData[PR_direction][0]) && (unoccupiedData[PR_roll][1] == unoccupiedData[PR_direction][1]) && (unoccupiedData[PR_roll][2] == unoccupiedData[PR_direction][2]))
+		{
+			ot_ReturnCallback(playerid, CRASHER_ENTER);
+	        return 0;
+	    }
 	}
     return 1;
 }
