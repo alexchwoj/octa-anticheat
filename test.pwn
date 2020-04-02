@@ -11,6 +11,7 @@ main()
 public OnPlayerConnect(playerid)
 {
 	GameTextForPlayer(playerid,"~w~Octa~r~ AntiCheat", 5000, 5);
+	ot_ResetPlayerWeapons(playerid);
 	return 1;
 }
 
@@ -30,6 +31,16 @@ public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 	return 1;
 }
 /* End */
+
+public OnPlayerCommandText(playerid, cmdtext[])
+{
+	if (strcmp("/mp5", cmdtext, true, 10) == 0)
+	{
+		ot_GivePlayerWeapon(playerid, 29, 100);
+		return 1;
+	}
+	return 0;
+}
 
 public OnPlayerRequestClass(playerid, classid)
 {
