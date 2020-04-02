@@ -49,7 +49,8 @@
 const 
 	PLAYER_SYNC = 207,
 	AIM_SYNC = 203,
-	WEAPONS_UPDATE_SYNC = 204
+	WEAPONS_UPDATE_SYNC = 204,
+	BULLET_SYNC = 206
 ;
 
 enum
@@ -71,7 +72,8 @@ enum
 	CHEAT_INVISIBLE_AIM,
 	CHEAT_SPEC,
 	CHEAT_WEAPON,
-	CHEAT_AMMO
+	CHEAT_AMMO,
+	CHEAT_FAKEBULLET
 };
 
 enum ac_info
@@ -99,7 +101,8 @@ new ANTICHEAT_INFO[][ac_info] =
 	{"invisible aim", true},
 	{"spec", true},
 	{"weapon", true},
-	{"ammo", true}
+	{"ammo", true},
+	{"fake bullet", true}
 };
 
 enum ac_player
@@ -468,6 +471,26 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
 				return 0;
 			}
 			PLAYER_WEAPONS[playerid][i][w_ammo] = weaponsUpdate[PR_slotWeaponAmmo][i];
+		}
+	}
+    return 1;
+}
+
+
+IPacket:BULLET_SYNC(playerid, BitStream:bs)
+{
+    new bulletData[PR_BulletSync];
+
+    BS_IgnoreBits(bs, 8);
+    BS_ReadBulletSync(bs, bulletData);
+
+    if (ANTICHEAT_PLAYER[playerid][CHEAT_FAKEBULLET][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FAKEBULLET][ac_enabled] == true)
+	{
+		new slot = GetWeaponSlot(bulletData[PR_weaponId]);
+		if (PLAYER_WEAPONS[playerid][slot][w_valid] == false)
+		{
+			ot_ReturnCallback(playerid, CHEAT_FAKEBULLET);
+			return 0;
 		}
 	}
     return 1;
