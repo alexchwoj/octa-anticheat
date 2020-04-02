@@ -63,7 +63,8 @@ enum
 	CHEAT_TELEPORT,
 	CHEAT_UNFREEZE,
 	CHEAT_INVISIBLE_SURFING,
-	CHEAT_INVISIBLE_AIM
+	CHEAT_INVISIBLE_AIM,
+	CHEAT_SPEC
 };
 
 enum ac_info
@@ -88,7 +89,8 @@ new ANTICHEAT_INFO[][ac_info] =
 	{"teleport", true},
 	{"unfreeze", true},
 	{"invisible surfing", true},
-	{"invisible aim", true}
+	{"invisible aim", true},
+	{"spec", true}
 };
 
 enum ac_player
@@ -107,6 +109,7 @@ enum data_player
 	p_virtual_world,
 	p_freeze,
 	p_special_action,
+	p_spectating,
 	p_last_chat_message,
 	p_chat_flood_attemps,
 	p_last_death,
@@ -144,6 +147,9 @@ public ot_Kick(playerid)
 
 stock ot_ReturnCallback(playerid, cheat_id)
 {
+	ANTICHEAT_PLAYER[playerid][CHEAT_SPEC][pac_last_detection] = gettime();
+	ANTICHEAT_PLAYER[playerid][CHEAT_SPEC][pac_detections] ++;
+
 	#if defined OnCheatDetected
 		return OnCheatDetected(playerid, cheat_id, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
 	#else
@@ -156,6 +162,21 @@ stock SetImmunityCheat(playerid, cheat_id, bool:immunity)
 {
 	ANTICHEAT_PLAYER[playerid][cheat_id][pac_immunity] = immunity;
 	return 1;
+}
+
+stock bool:GetImmunityCheat(playerid, cheat_id)
+{
+	return ANTICHEAT_PLAYER[playerid][cheat_id][pac_immunity];
+}
+
+stock GetPlayerDetections(playerid, cheat_id)
+{
+	return ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections];
+}
+
+stock GetPlayerLastDetection(playerid, cheat_id)
+{
+	return ANTICHEAT_PLAYER[playerid][cheat_id][pac_last_detection];
 }
 
 IPacket:PLAYER_SYNC(playerid, BitStream:bs)
@@ -172,8 +193,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 		{
 			if(onFootData[PR_specialAction] != PLAYER_DATA[playerid][p_special_action])
 			{
-				ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_last_detection] = gettime();
-				ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_detections] ++;
 				ot_ReturnCallback(playerid, CHEAT_SPECIAL_ACTION);
 				return 0;
 			}
@@ -189,8 +208,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	        {
 	            if(!IsPlayerInAnyVehicle(playerid))
 	            {
-	            	ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_detections] ++;
 					ot_ReturnCallback(playerid, CHEAT_FLY);
 					return 0;
 	            }
@@ -199,8 +216,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	        {
 	        	if(onFootData[PR_weaponId] != WEAPON_PARACHUTE)
 				{
-	        		ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_detections] ++;
 					ot_ReturnCallback(playerid, CHEAT_FLY);
 					return 0;
 				}
@@ -209,8 +224,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	        {
 	        	if(onFootData[PR_position][2] > 1.0)
 				{
-					ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_detections] ++;
 					ot_ReturnCallback(playerid, CHEAT_FLY);
 					return 0;
 				}
@@ -221,8 +234,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	/* Bullet Crasher */
 	if(ANTICHEAT_PLAYER[playerid][CRASHER_BULLET][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_BULLET][ac_enabled] == true && onFootData[PR_position][2] == -5.5)
 	{
-		ANTICHEAT_PLAYER[playerid][CRASHER_BULLET][pac_last_detection] = gettime();
-		ANTICHEAT_PLAYER[playerid][CRASHER_BULLET][pac_detections] ++;
 		ot_ReturnCallback(playerid, CRASHER_BULLET);
 		return 0;
 	}
@@ -236,8 +247,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 
 		if(speed > 41.0)
 		{
-			ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_last_detection] = gettime();
-			ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_detections] ++;
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
 		}
@@ -250,24 +259,18 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 
 		if(distance > 20.0)
 		{
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_last_detection] = gettime();
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_detections] ++;
 			ot_ReturnCallback(playerid, CHEAT_TELEPORT);
 			return 0;
 		}
 
 		if(GetPlayerInterior(playerid) != PLAYER_DATA[playerid][p_interior])
 		{
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_last_detection] = gettime();
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_detections] ++;
 			ot_ReturnCallback(playerid, CHEAT_TELEPORT);
 			return 0;
 		}
 
 		if(GetPlayerVirtualWorld(playerid) != PLAYER_DATA[playerid][p_virtual_world])
 		{
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_last_detection] = gettime();
-			ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_detections] ++;
 			ot_ReturnCallback(playerid, CHEAT_TELEPORT);
 			return 0;
 		}
@@ -284,8 +287,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 		
 			if(distance > 5.0)
 			{
-				ANTICHEAT_PLAYER[playerid][CHEAT_UNFREEZE][pac_last_detection] = gettime();
-				ANTICHEAT_PLAYER[playerid][CHEAT_UNFREEZE][pac_detections] ++;
 				ot_ReturnCallback(playerid, CHEAT_UNFREEZE);
 				return 0;
 			}
@@ -299,12 +300,19 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 		{
             if((floatabs(onFootData[PR_surfingOffsets][0]) >= 50.0) || (floatabs(onFootData[PR_surfingOffsets][1]) >= 50.0) || (floatabs(onFootData[PR_surfingOffsets][2]) >= 50.0))
             {
-            	ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_SURFING][pac_last_detection] = gettime();
-				ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_SURFING][pac_detections] ++;
 				ot_ReturnCallback(playerid, CHEAT_INVISIBLE_SURFING);
 				return 0;
             } 
         }
+	}
+
+	if(ANTICHEAT_PLAYER[playerid][CHEAT_SPEC][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEC][ac_enabled] == true)
+	{
+		if(GetPlayerState(playerid) == PLAYER_STATE_SPECTATING && PLAYER_DATA[playerid][p_spectating] == 0)
+		{
+			ot_ReturnCallback(playerid, CHEAT_SPEC);
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -319,8 +327,6 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
     /* Invalid Camera */
 	if(ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_CAMERA][ac_enabled] == true && aimData[PR_camMode] == 45 || aimData[PR_camMode] == 49)
 	{
-		ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_last_detection] = gettime();
-		ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_detections] ++;
 		ot_ReturnCallback(playerid, CRASHER_CAMERA);
 		return 0;
 	}
@@ -330,8 +336,6 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
 	{
 		if(aimData[PR_aimZ] != aimData[PR_aimZ])
     	{
-        	ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_AIM][pac_last_detection] = gettime();
-			ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_AIM][pac_detections] ++;
 			ot_ReturnCallback(playerid, CHEAT_INVISIBLE_AIM);
 			return 0;
     	}
@@ -352,8 +356,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_chat_flood_attemps] >= MAX_CHAT_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_CHAT][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_CHAT][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_CHAT);
 					return 0;
 				}
@@ -373,8 +375,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_death_flood_attemps] >= MAX_DEATH_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_DEATH][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_DEATH][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_DEATH);
 					return 0;
 				}
@@ -394,8 +394,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_enter_veh_attemps] >= MAX_ENTER_VEH_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_ENTER_VEH][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_ENTER_VEH][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_ENTER_VEH);
 					return 0;
 				}
@@ -415,8 +413,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_exit_veh_attemps] >= MAX_EXIT_VEH_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_EXIT_VEH][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_EXIT_VEH][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_EXIT_VEH);
 					return 0;
 				}
@@ -436,8 +432,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_class_attemps] >= MAX_CLASS_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_CLASS][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_CLASS][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_CLASS);
 					return 0;
 				}
@@ -457,8 +451,6 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 
 				if(PLAYER_DATA[playerid][p_spawn_attemps] >= MAX_SPAWN_FLOOD)
 				{
-					ANTICHEAT_PLAYER[playerid][FLOOD_SPAWN][pac_last_detection] = gettime();
-					ANTICHEAT_PLAYER[playerid][FLOOD_SPAWN][pac_detections] ++;
 					ot_ReturnCallback(playerid, FLOOD_SPAWN);
 					return 0;
 				}
@@ -516,5 +508,12 @@ stock ot_SetPlayerSpecialAction(playerid, actionid)
 {
 	PLAYER_DATA[playerid][p_special_action] = actionid;
 	SetPlayerSpecialAction(playerid, actionid);
+	return 1;
+}
+
+stock ot_TogglePlayerSpectating(playerid, toggle)
+{
+	PLAYER_DATA[playerid][p_spectating] = toggle
+	TogglePlayerSpectating(playerid, toggle);
 	return 1;
 }
