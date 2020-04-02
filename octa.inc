@@ -688,3 +688,91 @@ stock ot_SetPlayerArmedWeapon(playerid, weaponid)
 	SetPlayerArmedWeapon(playerid, weaponid);
 	return 1;
 }
+
+
+#if defined _ALS_SetPlayerPos
+	#undef SetPlayerPos
+#else
+	#define _ALS_SetPlayerPos
+#endif
+#define SetPlayerPos ot_SetPlayerPos
+
+
+#if defined _ALS_SetPlayerInterior
+	#undef SetPlayerInterior
+#else
+	#define _ALS_SetPlayerInterior
+#endif
+#define SetPlayerInterior ot_SetPlayerInterior
+
+
+#if defined _ALS_SetPlayerVirtualWorld
+	#undef SetPlayerVirtualWorld
+#else
+	#define _ALS_SetPlayerVirtualWorld
+#endif
+#define SetPlayerVirtualWorld ot_SetPlayerVirtualWorld
+
+
+#if defined _ALS_SetSpawnInfo
+	#undef SetSpawnInfo
+#else
+	#define _ALS_SetSpawnInfo
+#endif
+#define SetSpawnInfo ot_SetSpawnInfo
+
+
+#if defined _ALS_TogglePlayerControllable
+	#undef TogglePlayerControllable
+#else
+	#define _ALS_TogglePlayerControllable
+#endif
+#define TogglePlayerControllable ot_TogglePlayerControllable
+
+
+#if defined _ALS_SetPlayerSpecialAction
+	#undef SetPlayerSpecialAction
+#else
+	#define _ALS_SetPlayerSpecialAction
+#endif
+#define SetPlayerSpecialAction ot_SetPlayerSpecialAction
+
+
+#if defined _ALS_TogglePlayerSpectating
+	#undef TogglePlayerSpectating
+#else
+	#define _ALS_TogglePlayerSpectating
+#endif
+#define TogglePlayerSpectating ot_TogglePlayerSpectating
+
+
+#if defined _ALS_GivePlayerWeapon
+	#undef GivePlayerWeapon
+#else
+	#define _ALS_GivePlayerWeapon
+#endif
+#define GivePlayerWeapon ot_GivePlayerWeapon
+
+
+#if defined _ALS_SetPlayerAmmo
+	#undef SetPlayerAmmo
+#else
+	#define _ALS_SetPlayerAmmo
+#endif
+#define SetPlayerAmmo ot_SetPlayerAmmo
+
+
+#if defined _ALS_ResetPlayerWeapons
+	#undef ResetPlayerWeapons
+#else
+	#define _ALS_ResetPlayerWeapons
+#endif
+#define ResetPlayerWeapons ot_ResetPlayerWeapons
+
+
+#if defined _ALS_SetPlayerArmedWeapon
+	#undef SetPlayerArmedWeapon
+#else
+	#define _ALS_SetPlayerArmedWeapon
+#endif
+#define SetPlayerArmedWeapon ot_SetPlayerArmedWeapon
