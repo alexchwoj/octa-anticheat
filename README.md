@@ -17,11 +17,11 @@ Octa is a powerful anti-cheat service that counteracts cheating in San Andreas M
 Octa calls a function when a cheating attempt is detected, this function contains the identifier number of the cheat and that of the player. In the `test.pwn` file you have a usage example.
 
 ```pawn
-public OnCheatDetected(playerid, cheat_id)
+public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 {
 	new str_text[128];
-	format(str_text, sizeof(str_text), "Cheat Detected: %s - Detections: %d", ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
-	SendClientMessage(playerid, -1, str_text);
+	format(str_text, sizeof(str_text), "[{939393}%i{FFFFFF}] Cheat Detected: {EE5454}%s{FFFFFF} - Detections: {EFD755}%d", playerid, cheat_name, cheat_detections);
+	SendClientMessageToAll(-1, str_text);
 	return 1;
 }
 ```
@@ -57,3 +57,8 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti invisible vehicle surfing
 * Anti invisible aim
 * Anti spec
+
+## Credits
+* Atom - Programming
+* urShadow - Pawn.RakNet
+* leHeix - Provide help
