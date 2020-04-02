@@ -15,11 +15,9 @@
 /* Config */
 #define OCTA_VERSION "0.0.1"
 
-/*
 #if !defined DEBUG
 	#define DEBUG
 #endif
-*/
 
 #if !defined MAX_CHAT_FLOOD
 	#define MAX_CHAT_FLOOD			3
