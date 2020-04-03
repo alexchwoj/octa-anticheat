@@ -49,6 +49,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 	- Bullet crasher
 	- Unoccupied crasher
 	- Enter crasher
+	- Bullet fake position
 * Anti Flood
 	- Chat
 	- Deaths
@@ -61,6 +62,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti spec
 * Anti MoneyHack
 * Anti FakeBullets
+* Anti CarJack
 * IP Sessions limiter
 
 ## Credits

@@ -57,7 +57,8 @@ const
 	BULLET_SYNC = 206,
 	UNOCCUPIED_SYNC = 209,
 	VEHICLE_SYNC = 200,
-	SPECTATING_SYNC = 212
+	SPECTATING_SYNC = 212,
+	VehicleDestroyed = 136
 ;
 
 enum
@@ -84,7 +85,9 @@ enum
 	CRASHER_UNOCCUPIED,
 	CRASHER_ENTER,
 	CHEAT_MONEY,
-	CHEAT_LIMIT_SESSION
+	CHEAT_LIMIT_SESSION,
+	CHEAT_CARJACK,
+	CRASHER_BULLET_POS
 };
 
 enum ac_info
@@ -117,7 +120,9 @@ new ANTICHEAT_INFO[][ac_info] =
 	{"unoccupied crasher", true},
 	{"enter crasher", true},
 	{"money", true},
-	{"exceed maximum players in one ip", true}
+	{"exceed maximum players in one ip", true},
+	{"car jack", true},
+	{"fake bullet position", true}
 };
 
 enum ac_player
@@ -137,6 +142,7 @@ enum data_player
 	p_freeze,
 	p_special_action,
 	p_spectating,
+	p_vehicleid,
 	p_last_chat_message,
 	p_chat_flood_attemps,
 	p_last_death,
@@ -159,6 +165,27 @@ enum weapons_player
 	w_ammo
 };
 new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
+
+stock ot_ResetPlayerVariables(playerid)
+{
+	new temp_PLAYER_DATA[data_player]; PLAYER_DATA[playerid] = temp_PLAYER_DATA;
+	PLAYER_DATA[playerid][p_kicked] = false;
+
+	for(new i = 0; i < sizeof(ANTICHEAT_INFO[]); i ++)
+	{
+		ANTICHEAT_PLAYER[playerid][i][pac_detections] = 0;
+		ANTICHEAT_PLAYER[playerid][i][pac_last_detection] = 0;
+		ANTICHEAT_PLAYER[playerid][i][pac_immunity] = false;
+	}
+
+	for(new i = 0; i < sizeof(PLAYER_WEAPONS[]); i ++)
+	{
+		PLAYER_WEAPONS[playerid][i][w_valid] = false;
+		PLAYER_WEAPONS[playerid][i][w_id] = 0;
+		PLAYER_WEAPONS[playerid][i][w_ammo] = 0;
+	}
+	return 1;
+}
 
 /* Init */
 public OnGameModeInit()
@@ -185,22 +212,7 @@ public OnGameModeInit()
 /* Player Callbacks */
 public OnPlayerDisconnect(playerid)
 {
-	new temp_PLAYER_DATA[data_player]; PLAYER_DATA[playerid] = temp_PLAYER_DATA;
-	PLAYER_DATA[playerid][p_kicked] = false;
-
-	for(new i = 0; i < sizeof(ANTICHEAT_INFO[]); i ++)
-	{
-		ANTICHEAT_PLAYER[playerid][i][pac_detections] = 0;
-		ANTICHEAT_PLAYER[playerid][i][pac_last_detection] = 0;
-		ANTICHEAT_PLAYER[playerid][i][pac_immunity] = false;
-	}
-
-	for(new i = 0; i < sizeof(PLAYER_WEAPONS[]); i ++)
-	{
-		PLAYER_WEAPONS[playerid][i][w_valid] = false;
-		PLAYER_WEAPONS[playerid][i][w_id] = 0;
-		PLAYER_WEAPONS[playerid][i][w_ammo] = 0;
-	}
+	ot_ResetPlayerVariables(playerid);
 
 	#if defined OT_OnPlayerDisconnect
 		return OT_OnPlayerDisconnect(playerid);
@@ -377,10 +389,21 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	/* Teleport Hack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_TELEPORT][ac_enabled] == true)
 	{
-		new Float:distance = GetPlayerDistanceFromPoint(playerid, PLAYER_DATA[playerid][p_position][0], PLAYER_DATA[playerid][p_position][1], PLAYER_DATA[playerid][p_position][2]);
+		new 
+			Float:distance = GetPlayerDistanceFromPoint(playerid, PLAYER_DATA[playerid][p_position][0], PLAYER_DATA[playerid][p_position][1], PLAYER_DATA[playerid][p_position][2]),
+			Float:limit_distance = 15.0,
+			player_state = GetPlayerState(playerid)
+		;
 
-		if (distance > 20.0)
+		switch(player_state)
 		{
+			case PLAYER_STATE_ONFOOT: limit_distance = 5.0;
+			case PLAYER_STATE_DRIVER, PLAYER_STATE_PASSENGER: limit_distance = 20.0;
+		}
+
+		if (distance > limit_distance)
+		{
+			printf("%f - %f | %f, %f, %f", distance, limit_distance, PLAYER_DATA[playerid][p_position][0], PLAYER_DATA[playerid][p_position][1], PLAYER_DATA[playerid][p_position][2]);
 			ot_ReturnCallback(playerid, CHEAT_TELEPORT);
 			return 0;
 		}
@@ -519,6 +542,21 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
 			return 0;
 		}
 	}
+
+	if (ANTICHEAT_PLAYER[playerid][CRASHER_BULLET_POS][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_BULLET_POS][ac_enabled] == true)
+	{
+		if (!(-35000.0 <= bulletData[PR_origin][0] <= 35000.0) || !(-35000.0 <= bulletData[PR_origin][1] <= 35000.0) || !(-35000.0 <= bulletData[PR_origin][2] <= 35000.0))
+		{
+			ot_ReturnCallback(playerid, CRASHER_BULLET_POS);
+			return 0;	
+		}
+
+		if (!(-35000.0 <= bulletData[PR_hitPos][0] <= 35000.0) || !(-35000.0 <= bulletData[PR_hitPos][1] <= 35000.0) || !(-35000.0 <= bulletData[PR_hitPos][2] <= 35000.0))
+		{
+			ot_ReturnCallback(playerid, CRASHER_BULLET_POS);
+			return 0;	
+		}
+	}
     return 1;
 }
 
@@ -577,6 +615,18 @@ IPacket:VEHICLE_SYNC(playerid, BitStream:bs)
 
     if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
+    PLAYER_DATA[playerid][p_position][0] = inCarData[PR_position][0];
+    PLAYER_DATA[playerid][p_position][1] = inCarData[PR_position][1];
+    PLAYER_DATA[playerid][p_position][2] = inCarData[PR_position][2];
+
+    if (ANTICHEAT_PLAYER[playerid][CHEAT_CARJACK][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_CARJACK][ac_enabled] == true)
+	{
+	    if(IsPlayerInAnyVehicle(playerid) && PLAYER_DATA[playerid][p_vehicleid] != inCarData[PR_vehicleId])
+	    {
+			ot_ReturnCallback(playerid, CHEAT_CARJACK);
+			return 0;
+		}
+	}
     return 1;
 }
 
@@ -590,6 +640,20 @@ IPacket:SPECTATING_SYNC(playerid, BitStream:bs)
     if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
     return 1;
+}
+
+IRPC:VehicleDestroyed(playerid, BitStream:bs)
+{
+    new vehicleid;
+
+    BS_ReadUint16(bs, vehicleid);
+
+    if (GetVehicleModel(vehicleid) < 400)
+    {
+        return 0;
+    }
+
+    return OnVehicleRequestDeath(vehicleid, playerid);
 }
 
 public OnIncomingRPC(playerid, rpcid, BitStream:bs)
@@ -747,6 +811,72 @@ public OnIncomingConnection(playerid, ip_address[], port)
 	}
 	return 1;
 }
+
+forward OnVehicleRequestDeath(vehicleid, killerid);
+public OnVehicleRequestDeath(vehicleid, killerid)
+{
+    new Float:health;
+
+    GetVehicleHealth(vehicleid, health);
+
+    if (health >= 250.0)
+    {
+    	#if defined DEBUG
+			new name[MAX_PLAYER_NAME];
+			GetPlayerName(killerid, name, sizeof(name));
+			printf("[OCTA DETECTION] %s(%i): Vehicle Spawn", name, killerid);
+		#endif
+        return 0;
+    }
+
+    return 1;
+}
+
+public OnPlayerEnterVehicle(playerid, vehicleid, ispassenger)
+{
+	PLAYER_DATA[playerid][p_vehicleid] = vehicleid;
+	
+	#if defined OT_OnPlayerEnterVehicle
+		return OT_OnPlayerEnterVehicle();
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnPlayerEnterVehicle
+	#undef OnPlayerEnterVehicle
+#else
+	#define _ALS_OnPlayerEnterVehicle
+#endif
+
+#define OnPlayerEnterVehicle OT_OnPlayerEnterVehicle
+#if defined OT_OnPlayerEnterVehicle
+	forward OT_OnPlayerEnterVehicle();
+#endif
+
+public OnPlayerStateChange(playerid, newstate, oldstate)
+{
+	switch(oldstate)
+	{
+		case PLAYER_STATE_PASSENGER: PLAYER_DATA[playerid][p_vehicleid] = -1;
+		case PLAYER_STATE_DRIVER: PLAYER_DATA[playerid][p_vehicleid] = -1;
+	}
+	
+	#if defined OT_OnPlayerStateChange
+		return OT_OnPlayerStateChange();
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnPlayerStateChange
+	#undef OnPlayerStateChange
+#else
+	#define _ALS_OnPlayerStateChange
+#endif
+
+#define OnPlayerStateChange OT_OnPlayerStateChange
+#if defined OT_OnPlayerStateChange
+	forward OT_OnPlayerStateChange();
+#endif
 
 /* Fixed Functions */
 stock ot_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
