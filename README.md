@@ -28,6 +28,7 @@ public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 
 ## Fuctions
 ```pawn
+CheatEnableDisable(cheat_id, bool:enable);
 SetImmunityCheat(playerid, cheat_id, bool:immunity);
 GetImmunityCheat(playerid, cheat_id);
 GetPlayerDetections(playerid, cheat_id);

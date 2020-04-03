@@ -289,6 +289,12 @@ stock ot_ReturnCallback(playerid, cheat_id)
 	#endif
 }
 
+stock CheatEnableDisable(cheat_id, bool:enable)
+{
+	ANTICHEAT_INFO[cheat_id][ac_enabled] = enable;
+	return 1;
+}
+
 stock SetImmunityCheat(playerid, cheat_id, bool:immunity)
 {
 	ANTICHEAT_PLAYER[playerid][cheat_id][pac_immunity] = immunity;
