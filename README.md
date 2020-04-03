@@ -70,3 +70,6 @@ GetPlayerLastDetection(playerid, cheat_id);
 * [Atom](https://github.com/RealAtom) - Programming
 * [leHeix](https://github.com/leHeix) - Provide help and programming
 * [urShadow](https://github.com/urShadow) - [Pawn.RakNet](https://github.com/urShadow/Pawn.RakNet/)
+
+### Discord
+[![Foo](https://discordapp.com/api/guilds/586980198910656521/embed.png?style=banner2)](https://discord.gg/JDm38dX)
