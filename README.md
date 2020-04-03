@@ -9,7 +9,7 @@ Octa is a powerful anti-cheat service that counteracts cheating in San Andreas M
 2. Put the `octa.pwn` file in `pawno/include`
 3. Enter this line in your initial script (remember that it must go before any other and after a_samp)
 ```pawn
-#include <octa.inc>
+#include <octa>
 ```
 4. Install [Pawn.RakNet](https://github.com/urShadow/Pawn.RakNet/)
 
