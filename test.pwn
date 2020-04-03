@@ -5,13 +5,13 @@
 
 main()
 {
-	print("Running: Octa Test Server");
+	print("\nRunning: Octa Test Server");
 }
 
 public OnPlayerConnect(playerid)
 {
 	GameTextForPlayer(playerid,"~w~Octa~r~ AntiCheat", 5000, 5);
-	ot_ResetPlayerWeapons(playerid);
+	ResetPlayerWeapons(playerid);
 	return 1;
 }
 
@@ -21,22 +21,26 @@ public OnPlayerDeath(playerid, killerid, reason)
  	return 1;
 }
 
-/* Callback Example */
-forward OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections);
 public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 {
-	new str_text[128];
-	format(str_text, sizeof(str_text), "[{939393}%i{FFFFFF}] Cheat Detected: {EE5454}%s{FFFFFF} - Detections: {EFD755}%d", playerid, cheat_name, cheat_detections);
-	SendClientMessageToAll(-1, str_text);
+	//new str_text[128];
+	//format(str_text, sizeof(str_text), "[{939393}%i{FFFFFF}] Cheat Detected: {EE5454}%s{FFFFFF} - Detections: {EFD755}%d", playerid, cheat_name, cheat_detections);
+	//SendClientMessageToAll(-1, str_text);
+	ot_CheatKick(playerid, cheat_id);
 	return 1;
 }
-/* End */
 
 public OnPlayerCommandText(playerid, cmdtext[])
 {
 	if (strcmp("/mp5", cmdtext, true, 10) == 0)
 	{
-		ot_GivePlayerWeapon(playerid, 29, 100);
+		GivePlayerWeapon(playerid, 29, 100);
+		return 1;
+	}
+
+	if (strcmp("/testveh", cmdtext, true, 10) == 0)
+	{
+		CreateVehicle(411, 1589.339843, -1054.775756, 23.633340, 90.0, -1, -1, 0, 0);
 		return 1;
 	}
 	return 0;
@@ -44,7 +48,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
 public OnPlayerRequestClass(playerid, classid)
 {
-    ot_SetSpawnInfo(playerid, 0, 167, 1589.339843, -1054.775756, 23.633340, 90.0, -1, -1, -1, -1, -1, -1);
+    SetSpawnInfo(playerid, 0, 167, 1589.339843, -1054.775756, 23.633340, 90.0, -1, -1, -1, -1, -1, -1);
 	return 0;
 }
 

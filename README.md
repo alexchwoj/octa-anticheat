@@ -59,6 +59,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti invisible vehicle surfing
 * Anti invisible aim
 * Anti spec
+* Anti MoneyHack
 * Anti FakeBullets
 
 ## Credits
