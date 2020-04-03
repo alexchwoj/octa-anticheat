@@ -58,7 +58,7 @@ const
 	UNOCCUPIED_SYNC = 209,
 	VEHICLE_SYNC = 200,
 	SPECTATING_SYNC = 212,
-	VehicleDestroyed = 136
+	VEHICLE_DESTROYED = 136
 ;
 
 enum
@@ -641,7 +641,7 @@ IPacket:SPECTATING_SYNC(playerid, BitStream:bs)
     return 1;
 }
 
-IRPC:VehicleDestroyed(playerid, BitStream:bs)
+IRPC:VEHICLE_DESTROYED(playerid, BitStream:bs)
 {
     new vehicleid;
 
