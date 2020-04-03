@@ -15,11 +15,9 @@
 /* Config */
 #define OCTA_VERSION "0.0.1"
 
-/*
 #if !defined DEBUG
 	#define DEBUG 
 #endif
-*/
 
 #if !defined MAX_CHAT_FLOOD
 	#define MAX_CHAT_FLOOD			3
@@ -46,12 +44,16 @@
 #endif
 
 /* Core */
+forward OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections);
+
 const 
 	PLAYER_SYNC = 207,
 	AIM_SYNC = 203,
 	WEAPONS_UPDATE_SYNC = 204,
 	BULLET_SYNC = 206,
-	UNOCCUPIED_SYNC = 209
+	UNOCCUPIED_SYNC = 209,
+	VEHICLE_SYNC = 200,
+	SPECTATING_SYNC = 212
 ;
 
 enum
@@ -175,6 +177,9 @@ public OnGameModeInit()
 /* Player Callbacks */
 public OnPlayerDisconnect(playerid)
 {
+	new temp_PLAYER_DATA[data_player]; PLAYER_DATA[playerid] = temp_PLAYER_DATA;
+	PLAYER_DATA[playerid][p_kicked] = false;
+
 	for(new i = 0; i < sizeof(ANTICHEAT_INFO[]); i ++)
 	{
 		ANTICHEAT_PLAYER[playerid][i][pac_detections] = 0;
@@ -185,6 +190,8 @@ public OnPlayerDisconnect(playerid)
 	for(new i = 0; i < sizeof(PLAYER_WEAPONS[]); i ++)
 	{
 		PLAYER_WEAPONS[playerid][i][w_valid] = false;
+		PLAYER_WEAPONS[playerid][i][w_id] = 0;
+		PLAYER_WEAPONS[playerid][i][w_ammo] = 0;
 	}
 
 	#if defined OT_OnPlayerDisconnect
@@ -234,7 +241,7 @@ stock ot_CheatKick(playerid, cheat_id)
 		new str_text[128];
 		format(str_text, sizeof(str_text), "[OCTA]{FFFFFF} You were kicked out of the server for: %s", ANTICHEAT_INFO[cheat_id][ac_name]);
 		SendClientMessage(playerid, 0x0090FFFF, str_text);
-		SetTimerEx("ot_Kick", 500, false, "i", playerid);
+		SetTimerEx("ot_Kick", 50, false, "i", playerid);
 		PLAYER_DATA[playerid][p_kicked] = true;
 	}
 	return 1;
@@ -258,9 +265,7 @@ stock ot_ReturnCallback(playerid, cheat_id)
 	#endif
 
 	#if defined OnCheatDetected
-		return OnCheatDetected(playerid, cheat_id, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
-	#else
-		return ot_CheatKick(playerid, cheat_id);
+		return CallLocalFunction("OnCheatDetected", "iis[64]d", playerid, cheat_id, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
 	#endif
 }
 
@@ -293,34 +298,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	BS_IgnoreBits(bs, 8);
 	BS_ReadOnFootSync(bs, onFootData);
 
-	printf(
-        "PLAYER_SYNC[%d]:\nlrKey %d \nudKey %d \nkeys %d \nposition: %.2f %.2f %.2f \nquaternion %.2f %.2f %.2f %.2f \nhealth %d \narmour %d \nadditionalKey %d \nweaponId %d \nspecialAction %d \nvelocity %.2f %.2f %.2f \nsurfingOffsets %.2f %.2f %.2f \nsurfingVehicleId %d \nanimationId %d \nanimationFlags %d",
-        playerid,
-        onFootData[PR_lrKey],
-        onFootData[PR_udKey],
-        onFootData[PR_keys],
-        onFootData[PR_position][0],
-        onFootData[PR_position][1],
-        onFootData[PR_position][2],
-        onFootData[PR_quaternion][0],
-        onFootData[PR_quaternion][1],
-        onFootData[PR_quaternion][2],
-        onFootData[PR_quaternion][3],
-        onFootData[PR_health],
-        onFootData[PR_armour],
-        onFootData[PR_additionalKey],
-        onFootData[PR_weaponId],
-        onFootData[PR_specialAction],
-        onFootData[PR_velocity][0],
-        onFootData[PR_velocity][1],
-        onFootData[PR_velocity][2],
-        onFootData[PR_surfingOffsets][0],
-        onFootData[PR_surfingOffsets][1],
-        onFootData[PR_surfingOffsets][2],
-        onFootData[PR_surfingVehicleId],
-        onFootData[PR_animationId],
-        onFootData[PR_animationFlags]
-    );
+	if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
 	/* Special Action Hack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPECIAL_ACTION][ac_enabled] == true)
@@ -460,21 +438,7 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadAimSync(bs, aimData);
 
-    printf(
-        "AIM_SYNC[%d]:\ncamMode %d \ncamFrontVec %.2f %.2f %.2f \ncamPos %.2f %.2f %.2f \naimZ %.2f \nweaponState %d \ncamZoom %d \naspectRatio %d",
-        playerid,
-        aimData[PR_camMode],
-        aimData[PR_camFrontVec][0],
-        aimData[PR_camFrontVec][1],
-        aimData[PR_camFrontVec][2],
-        aimData[PR_camPos][0],
-        aimData[PR_camPos][1],
-        aimData[PR_camPos][2],
-        aimData[PR_aimZ],
-        aimData[PR_weaponState],
-        aimData[PR_camZoom],
-        aimData[PR_aspectRatio]
-    );
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
     /* Invalid Camera */
 	if (ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_CAMERA][ac_enabled] == true && aimData[PR_camMode] == 45 || aimData[PR_camMode] == 49)
@@ -502,38 +466,7 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadWeaponsUpdate(bs, weaponsUpdate);
 
-    printf(
-        "WEAPONS_UPDATE_SYNC[%d]:\ntargetId %d \ntargetActorId %d \nslotWeaponId %d %d %d %d %d %d %d %d %d %d %d %d %d \nslotWeaponAmmo %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        playerid,
-        weaponsUpdate[PR_targetId],
-        weaponsUpdate[PR_targetActorId],
-        weaponsUpdate[PR_slotWeaponId][0],
-        weaponsUpdate[PR_slotWeaponId][1],
-        weaponsUpdate[PR_slotWeaponId][2],
-        weaponsUpdate[PR_slotWeaponId][3],
-        weaponsUpdate[PR_slotWeaponId][4],
-        weaponsUpdate[PR_slotWeaponId][5],
-        weaponsUpdate[PR_slotWeaponId][6],
-        weaponsUpdate[PR_slotWeaponId][7],
-        weaponsUpdate[PR_slotWeaponId][8],
-        weaponsUpdate[PR_slotWeaponId][9],
-        weaponsUpdate[PR_slotWeaponId][10],
-        weaponsUpdate[PR_slotWeaponId][11],
-        weaponsUpdate[PR_slotWeaponId][12],
-        weaponsUpdate[PR_slotWeaponAmmo][0],
-        weaponsUpdate[PR_slotWeaponAmmo][1],
-        weaponsUpdate[PR_slotWeaponAmmo][2],
-        weaponsUpdate[PR_slotWeaponAmmo][3],
-        weaponsUpdate[PR_slotWeaponAmmo][4],
-        weaponsUpdate[PR_slotWeaponAmmo][5],
-        weaponsUpdate[PR_slotWeaponAmmo][6],
-        weaponsUpdate[PR_slotWeaponAmmo][7],
-        weaponsUpdate[PR_slotWeaponAmmo][8],
-        weaponsUpdate[PR_slotWeaponAmmo][9],
-        weaponsUpdate[PR_slotWeaponAmmo][10],
-        weaponsUpdate[PR_slotWeaponAmmo][11],
-        weaponsUpdate[PR_slotWeaponAmmo][12]
-    );
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
     for (new i = 0; i < sizeof(PLAYER_WEAPONS); i++)
 	{
@@ -567,22 +500,7 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadBulletSync(bs, bulletData);
 
-    printf(
-        "BULLET_SYNC[%d]:\nhitType %d \nhitId %d \norigin %.2f %.2f %.2f \nhitPos %.2f %.2f %.2f \noffsets %.2f %.2f %.2f \nweaponId %d",
-        playerid,
-        bulletData[PR_hitType],
-        bulletData[PR_hitId],
-        bulletData[PR_origin][0],
-        bulletData[PR_origin][1],
-        bulletData[PR_origin][2],
-        bulletData[PR_hitPos][0],
-        bulletData[PR_hitPos][1],
-        bulletData[PR_hitPos][2],
-        bulletData[PR_offsets][0],
-        bulletData[PR_offsets][1],
-        bulletData[PR_offsets][2],
-        bulletData[PR_weaponId]
-    );
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
 
     if (ANTICHEAT_PLAYER[playerid][CHEAT_FAKEBULLET][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FAKEBULLET][ac_enabled] == true)
 	{
@@ -603,6 +521,8 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadUnoccupiedSync(bs, unoccupiedData);
  
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+
     //thx https://vk.com/franzesco and https://vk.com/dataflex
     if (ANTICHEAT_PLAYER[playerid][CRASHER_UNOCCUPIED][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_UNOCCUPIED][ac_enabled] == true)
 	{
@@ -640,8 +560,34 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
     return 1;
 }
 
+IPacket:VEHICLE_SYNC(playerid, BitStream:bs)
+{
+    new inCarData[PR_InCarSync];
+
+    BS_IgnoreBits(bs, 8);
+    BS_ReadInCarSync(bs, inCarData);
+
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+
+    return 1;
+}
+
+IPacket:SPECTATING_SYNC(playerid, BitStream:bs)
+{
+    new spectatingData[PR_SpectatingSync];
+    
+    BS_IgnoreBits(bs, 8);
+    BS_ReadSpectatingSync(bs, spectatingData);
+
+    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+
+    return 1;
+}
+
 public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 {
+	if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+	
 	/* Chat Flood */
 	if (rpcid == 101)
 	{
