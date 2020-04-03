@@ -61,6 +61,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti spec
 * Anti MoneyHack
 * Anti FakeBullets
+* IP Sessions limiter
 
 ## Credits
 * [Atom](https://github.com/RealAtom) - Programming
