@@ -403,7 +403,6 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 
 		if (distance > limit_distance)
 		{
-			printf("%f - %f | %f, %f, %f", distance, limit_distance, PLAYER_DATA[playerid][p_position][0], PLAYER_DATA[playerid][p_position][1], PLAYER_DATA[playerid][p_position][2]);
 			ot_ReturnCallback(playerid, CHEAT_TELEPORT);
 			return 0;
 		}
