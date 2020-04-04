@@ -517,7 +517,8 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
 
 		if (ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled] == true)
 		{
-			if (PLAYER_WEAPONS[playerid][i][w_ammo] < weaponsUpdate[PR_slotWeaponAmmo][i])
+			new difference = (PLAYER_WEAPONS[playerid][i][w_ammo] - weaponsUpdate[PR_slotWeaponAmmo][i]);
+			if (difference > 10)
 			{
 				ot_ReturnCallback(playerid, CHEAT_AMMO);
 				return 0;
