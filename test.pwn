@@ -1,7 +1,7 @@
 #include <a_samp>
 #include <core>
 #include <float>
-#include "../../octa.inc"
+#include <octa>
 
 main()
 {
