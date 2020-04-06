@@ -154,7 +154,8 @@ enum data_player
 	p_last_request_class,
 	p_class_attemps,
 	p_last_request_spawn,
-	p_spawn_attemps
+	p_spawn_attemps,
+	p_money
 }
 new PLAYER_DATA[MAX_PLAYERS][data_player];
 
@@ -165,6 +166,8 @@ enum weapons_player
 	w_ammo
 };
 new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
+
+new bool:pedAnims = false;
 
 stock ot_ResetPlayerVariables(playerid)
 {
@@ -232,7 +235,7 @@ public OnPlayerDisconnect(playerid)
 #endif
 
 /* Utils */
-stock GetWeaponSlot(weaponid)
+static GetWeaponSlot(weaponid)
 {
    	switch(weaponid)
    	{
@@ -289,19 +292,19 @@ stock ot_ReturnCallback(playerid, cheat_id)
 	#endif
 }
 
-stock CheatEnableDisable(cheat_id, bool:enable)
+stock ToggleCheatDetection(cheat_id, bool:enable)
 {
 	ANTICHEAT_INFO[cheat_id][ac_enabled] = enable;
 	return 1;
 }
 
-stock SetImmunityCheat(playerid, cheat_id, bool:immunity)
+stock SetCheatImmunity(playerid, cheat_id, bool:immunity)
 {
 	ANTICHEAT_PLAYER[playerid][cheat_id][pac_immunity] = immunity;
 	return 1;
 }
 
-stock bool:GetImmunityCheat(playerid, cheat_id)
+stock bool:GetCheatImmunity(playerid, cheat_id)
 {
 	return ANTICHEAT_PLAYER[playerid][cheat_id][pac_immunity];
 }
@@ -344,7 +347,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	{
 		switch(onFootData[PR_animationId])
         {
-			case 157, 159, 161:
+			case 157, 159, 161, 1058:
 	        {
 	            if (!IsPlayerInAnyVehicle(playerid))
 	            {
@@ -379,13 +382,28 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* Speed Hack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEED][ac_enabled] == true && onFootData[PR_surfingVehicleId] > 0)
+	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEED][ac_enabled] == true && onFootData[PR_surfingVehicleId] == 0)
 	{
-		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK || IsPlayerInAnyVehicle(playerid) || onFootData[PR_animationId] == 1130) return 1;
+		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK || IsPlayerInAnyVehicle(playerid)) return 1;
 
-		new Float:speed = floatsqroot( floatpower(floatabs(onFootData[PR_velocity][0]), 2.0) + floatpower(floatabs(onFootData[PR_velocity][1]), 2.0) + floatpower(floatabs(onFootData[PR_velocity][2]), 2.0)) * 253.3;
+		// Animations with these IDs tend to increase speed for nothing, doing so will trigger the speedhack detection.
+		if (onFootData[PR_animationId] == 1130 || onFootData[PR_animationId] == 1062 || onFootData[PR_animationId] == 1132) return 1;
 
-		if (speed > 80.0)
+		new animlib[16], animname[32];
+		GetAnimationName(onFootData[PR_animationId], animlib, sizeof(animlib), animname, sizeof(animname));
+
+		if(!strcmp(animname, "GUNCROUCHFWD") && (floatabs(onFootData[PR_velocity][0]) > 0.08 || floatabs(onFootData[PR_velocity][1]) > 0.08))
+		{
+			ot_ReturnCallback(playerid, CHEAT_SPEED);
+			return 0;
+		}
+
+		if(!pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
+		{
+			ot_ReturnCallback(playerid, CHEAT_SPEED);
+			return 0;
+		}
+		else if(pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
@@ -897,7 +915,7 @@ stock ot_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
 stock ot_SetPlayerInterior(playerid, interiorid)
 {
 	PLAYER_DATA[playerid][p_interior] = interiorid;
-	SetPlayerInterior(playerid, interiorid)
+	SetPlayerInterior(playerid, interiorid);
 	return 1;
 }
 
@@ -936,7 +954,7 @@ stock ot_SetPlayerSpecialAction(playerid, actionid)
 
 stock ot_TogglePlayerSpectating(playerid, toggle)
 {
-	PLAYER_DATA[playerid][p_spectating] = toggle
+	PLAYER_DATA[playerid][p_spectating] = toggle;
 	TogglePlayerSpectating(playerid, toggle);
 	return 1;
 }
@@ -999,6 +1017,13 @@ stock ot_ResetPlayerMoney(playerid)
 {
 	PLAYER_DATA[playerid][p_money] = 0;
 	ResetPlayerMoney(playerid);
+	return 1;
+}
+
+stock ot_UsePlayerPedAnims()
+{
+	pedAnims = true;
+	UsePlayerPedAnims();
 	return 1;
 }
 
@@ -1112,3 +1137,11 @@ stock ot_ResetPlayerMoney(playerid)
 	#define _ALS_ResetPlayerMoney
 #endif
 #define ResetPlayerMoney ot_ResetPlayerMoney
+
+
+#if defined _ALS_UsePlayerPedAnims
+	#undef UsePlayerPedAnims
+#else
+	#define _ALS_UsePlayerPedAnims
+#endif
+#define UsePlayerPedAnims ot_UsePlayerPedAnims
