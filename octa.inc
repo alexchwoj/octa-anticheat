@@ -332,19 +332,23 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	/* Special Action Hack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPECIAL_ACTION][ac_enabled] == true)
 	{
-		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK)
+		if (onFootData[PR_specialAction] != PLAYER_DATA[playerid][p_special_action])
 		{
-			if (onFootData[PR_specialAction] != PLAYER_DATA[playerid][p_special_action])
-			{
-				ot_ReturnCallback(playerid, CHEAT_SPECIAL_ACTION);
-				return 0;
-			}
+			ot_ReturnCallback(playerid, CHEAT_SPECIAL_ACTION);
+			return 0;
 		}
 	}
 
 	/* FlyHack */
 	if (ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FLY][ac_enabled] == true)
 	{
+
+		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK)
+		{
+			ot_ReturnCallback(playerid, CHEAT_FLY);
+			return 0;
+		}
+		
 		switch(onFootData[PR_animationId])
         {
 			case 157, 159, 161, 1058:
