@@ -288,7 +288,10 @@ stock ot_ReturnCallback(playerid, cheat_id)
 	#endif
 
 	#if defined OnCheatDetected
-		return CallLocalFunction("OnCheatDetected", "iis[64]d", playerid, cheat_id, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
+		return OnCheatDetected(playerid, cheat_id, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
+	#else
+		ot_CheatKick(playerid, cheat_id);
+		return 1;
 	#endif
 }
 
@@ -1030,6 +1033,7 @@ stock ot_UsePlayerPedAnims()
 	UsePlayerPedAnims();
 	return 1;
 }
+
 
 #if defined _ALS_SetPlayerPos
 	#undef SetPlayerPos
