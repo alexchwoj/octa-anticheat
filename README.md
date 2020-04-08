@@ -65,6 +65,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 * Anti FakeBullets
 * Anti CarJack
 * Anti TrollCheat
+* Anti DialogHack
 * IP Sessions limiter
 
 ## Credits
