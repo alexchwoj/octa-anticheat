@@ -47,10 +47,6 @@
 	#define MAX_PLAYERS_ON_IP		3
 #endif
 
-#if !defined MAX_NETWORK_MESSSAGES
-	#define MAX_NETWORK_MESSAGES    800
-#endif
-
 /* Core */
 forward OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections);
 
@@ -960,7 +956,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 #else
 	#define _ALS_OnDialogResponse
 #endif
-#define OnDialogResponse ot_OnDialogResponse
+#define OnDialogResponse OT_OnDialogResponse
 #if defined OT_OnDialogResponse
 	forward OT_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
 #endif
