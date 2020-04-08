@@ -47,8 +47,17 @@
 	#define MAX_PLAYERS_ON_IP		3
 #endif
 
+#if !defined MAX_NETWORK_MESSSAGES
+	#define MAX_NETWORK_MESSAGES    800
+#endif
+
 /* Core */
 forward OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections);
+
+#if !defined isnull
+    #define isnull(%1) \
+                ((!(%1[0])) || (((%1[0]) == '\1') && (!(%1[1]))))
+#endif
 
 const 
 	PLAYER_SYNC = 207,
@@ -87,7 +96,8 @@ enum
 	CHEAT_MONEY,
 	CHEAT_LIMIT_SESSION,
 	CHEAT_CARJACK,
-	CRASHER_BULLET_POS
+	CRASHER_BULLET_POS,
+	CHEAT_DIALOGS
 };
 
 enum ac_info
@@ -122,7 +132,8 @@ new ANTICHEAT_INFO[][ac_info] =
 	{"money", true},
 	{"exceed maximum players in one ip", true},
 	{"car jack", true},
-	{"fake bullet position", true}
+	{"fake bullet position", true},
+	{"dialog spoofing", true}
 };
 
 enum ac_player
@@ -155,7 +166,8 @@ enum data_player
 	p_class_attemps,
 	p_last_request_spawn,
 	p_spawn_attemps,
-	p_money
+	p_money,
+	p_dialog
 }
 new PLAYER_DATA[MAX_PLAYERS][data_player];
 
@@ -167,7 +179,7 @@ enum weapons_player
 };
 new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
 
-new bool:pedAnims = false;
+new bool:ot_pedAnims = false;
 
 stock ot_ResetPlayerVariables(playerid)
 {
@@ -259,7 +271,7 @@ static GetWeaponSlot(weaponid)
 
 stock ot_CheatKick(playerid, cheat_id)
 {
-	if (PLAYER_DATA[playerid][p_kicked] == false)
+	if (!PLAYER_DATA[playerid][p_kicked])
 	{
 		new str_text[128];
 		format(str_text, sizeof(str_text), "[OCTA]{FFFFFF} You were kicked out of the server for: %s", ANTICHEAT_INFO[cheat_id][ac_name]);
@@ -330,10 +342,10 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	BS_IgnoreBits(bs, 8);
 	BS_ReadOnFootSync(bs, onFootData);
 
-	if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+	if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
 	/* Special Action Hack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPECIAL_ACTION][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_SPECIAL_ACTION][pac_immunity] && ANTICHEAT_INFO[CHEAT_SPECIAL_ACTION][ac_enabled])
 	{
 		if (onFootData[PR_specialAction] != PLAYER_DATA[playerid][p_special_action])
 		{
@@ -343,7 +355,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* FlyHack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FLY][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_FLY][pac_immunity] && ANTICHEAT_INFO[CHEAT_FLY][ac_enabled])
 	{
 
 		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK)
@@ -382,14 +394,14 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* Bullet Crasher */
-	if (ANTICHEAT_PLAYER[playerid][CRASHER_BULLET][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_BULLET][ac_enabled] == true && onFootData[PR_position][2] == -5.5)
+	if (!ANTICHEAT_PLAYER[playerid][CRASHER_BULLET][pac_immunity] && ANTICHEAT_INFO[CRASHER_BULLET][ac_enabled] && onFootData[PR_position][2] == -5.5)
 	{
 		ot_ReturnCallback(playerid, CRASHER_BULLET);
 		return 0;
 	}
 
 	/* Speed Hack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEED][ac_enabled] == true && onFootData[PR_surfingVehicleId] == 0)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_immunity] && ANTICHEAT_INFO[CHEAT_SPEED][ac_enabled] && onFootData[PR_surfingVehicleId] == 0)
 	{
 		if (onFootData[PR_specialAction] == SPECIAL_ACTION_USEJETPACK || IsPlayerInAnyVehicle(playerid)) return 1;
 
@@ -405,12 +417,12 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 			return 0;
 		}
 
-		if(!pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
+		if(!ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
 		}
-		else if(pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
+		else if(ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
@@ -418,7 +430,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* Teleport Hack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_TELEPORT][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_TELEPORT][pac_immunity] && ANTICHEAT_INFO[CHEAT_TELEPORT][ac_enabled])
 	{
 		new 
 			Float:distance = GetPlayerDistanceFromPoint(playerid, PLAYER_DATA[playerid][p_position][0], PLAYER_DATA[playerid][p_position][1], PLAYER_DATA[playerid][p_position][2]),
@@ -454,7 +466,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* UnFreeze Hack */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_UNFREEZE][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_UNFREEZE][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_UNFREEZE][pac_immunity] && ANTICHEAT_INFO[CHEAT_UNFREEZE][ac_enabled])
 	{
 		if (PLAYER_DATA[playerid][p_freeze] == 1)
 		{
@@ -469,7 +481,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	}
 
 	/* Invisible vehicle surfing */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_SURFING][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_INVISIBLE_SURFING][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_SURFING][pac_immunity] && ANTICHEAT_INFO[CHEAT_INVISIBLE_SURFING][ac_enabled])
 	{
 		if (onFootData[PR_surfingVehicleId] != 0 && onFootData[PR_surfingVehicleId] != INVALID_VEHICLE_ID)
 		{
@@ -481,7 +493,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
         }
 	}
 
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEC][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_SPEC][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_SPEC][pac_immunity] && ANTICHEAT_INFO[CHEAT_SPEC][ac_enabled])
 	{
 		if (GetPlayerState(playerid) == PLAYER_STATE_SPECTATING && PLAYER_DATA[playerid][p_spectating] == 0)
 		{
@@ -499,17 +511,17 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadAimSync(bs, aimData);
 
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
     /* Invalid Camera */
-	if (ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_CAMERA][ac_enabled] == true && aimData[PR_camMode] == 45 || aimData[PR_camMode] == 49)
+	if (!ANTICHEAT_PLAYER[playerid][CRASHER_CAMERA][pac_immunity] && ANTICHEAT_INFO[CRASHER_CAMERA][ac_enabled] && aimData[PR_camMode] == 45 || aimData[PR_camMode] == 49)
 	{
 		ot_ReturnCallback(playerid, CRASHER_CAMERA);
 		return 0;
 	}
 
 	/* Invisible Aim */
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_AIM][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_INVISIBLE_AIM][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_INVISIBLE_AIM][pac_immunity] && ANTICHEAT_INFO[CHEAT_INVISIBLE_AIM][ac_enabled])
 	{
 		if (aimData[PR_aimZ] != aimData[PR_aimZ])
     	{
@@ -527,20 +539,20 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadWeaponsUpdate(bs, weaponsUpdate);
 
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
     for (new i = 0; i < sizeof(PLAYER_WEAPONS); i++)
 	{
-		if (ANTICHEAT_PLAYER[playerid][CHEAT_WEAPON][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_WEAPON][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][CHEAT_WEAPON][pac_immunity] && ANTICHEAT_INFO[CHEAT_WEAPON][ac_enabled])
 		{
-			if (weaponsUpdate[PR_slotWeaponId][i] > 0 && PLAYER_WEAPONS[playerid][i][w_valid] == false)
+			if (weaponsUpdate[PR_slotWeaponId][i] > 0 && !PLAYER_WEAPONS[playerid][i][w_valid])
 			{
 				ot_ReturnCallback(playerid, CHEAT_WEAPON);
 				return 0;
 			}
 		}
 
-		if (ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled])
 		{
 			new difference = (PLAYER_WEAPONS[playerid][i][w_ammo] - weaponsUpdate[PR_slotWeaponAmmo][i]);
 			if (difference > 10)
@@ -562,19 +574,19 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadBulletSync(bs, bulletData);
 
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
-    if (ANTICHEAT_PLAYER[playerid][CHEAT_FAKEBULLET][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_FAKEBULLET][ac_enabled] == true)
+    if (!ANTICHEAT_PLAYER[playerid][CHEAT_FAKEBULLET][pac_immunity] && ANTICHEAT_INFO[CHEAT_FAKEBULLET][ac_enabled])
 	{
 		new slot = GetWeaponSlot(bulletData[PR_weaponId]);
-		if (PLAYER_WEAPONS[playerid][slot][w_valid] == false)
+		if (!PLAYER_WEAPONS[playerid][slot][w_valid])
 		{
 			ot_ReturnCallback(playerid, CHEAT_FAKEBULLET);
 			return 0;
 		}
 	}
 
-	if (ANTICHEAT_PLAYER[playerid][CRASHER_BULLET_POS][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_BULLET_POS][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CRASHER_BULLET_POS][pac_immunity] && ANTICHEAT_INFO[CRASHER_BULLET_POS][ac_enabled])
 	{
 		if (!(-35000.0 <= bulletData[PR_origin][0] <= 35000.0) || !(-35000.0 <= bulletData[PR_origin][1] <= 35000.0) || !(-35000.0 <= bulletData[PR_origin][2] <= 35000.0))
 		{
@@ -598,10 +610,10 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadUnoccupiedSync(bs, unoccupiedData);
  
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
     //thx https://vk.com/franzesco and https://vk.com/dataflex
-    if (ANTICHEAT_PLAYER[playerid][CRASHER_UNOCCUPIED][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_UNOCCUPIED][ac_enabled] == true)
+    if (!ANTICHEAT_PLAYER[playerid][CRASHER_UNOCCUPIED][pac_immunity] && ANTICHEAT_INFO[CRASHER_UNOCCUPIED][ac_enabled])
 	{
 	    if ((floatabs(unoccupiedData[PR_roll][0]) > 1.0) ||
 	        (floatabs(unoccupiedData[PR_roll][1]) > 1.0) ||
@@ -626,7 +638,7 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
 	}
 
 	//thx f0Re3t and Nexius
-	if (ANTICHEAT_PLAYER[playerid][CRASHER_ENTER][pac_immunity] == false && ANTICHEAT_INFO[CRASHER_ENTER][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CRASHER_ENTER][pac_immunity] && ANTICHEAT_INFO[CRASHER_ENTER][ac_enabled])
 	{
 		if ((unoccupiedData[PR_roll][0] == unoccupiedData[PR_direction][0]) && (unoccupiedData[PR_roll][1] == unoccupiedData[PR_direction][1]) && (unoccupiedData[PR_roll][2] == unoccupiedData[PR_direction][2]))
 		{
@@ -639,26 +651,29 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
 
 IPacket:VEHICLE_SYNC(playerid, BitStream:bs)
 {
+	if(!IsPlayerInAnyVehicle(playerid)) return 0;
+
     new inCarData[PR_InCarSync];
 
     BS_IgnoreBits(bs, 8);
     BS_ReadInCarSync(bs, inCarData);
 
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
     PLAYER_DATA[playerid][p_position][0] = inCarData[PR_position][0];
     PLAYER_DATA[playerid][p_position][1] = inCarData[PR_position][1];
     PLAYER_DATA[playerid][p_position][2] = inCarData[PR_position][2];
 
-    if (ANTICHEAT_PLAYER[playerid][CHEAT_CARJACK][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_CARJACK][ac_enabled] == true)
+    if (!ANTICHEAT_PLAYER[playerid][CHEAT_CARJACK][pac_immunity] && ANTICHEAT_INFO[CHEAT_CARJACK][ac_enabled])
 	{
-	    if(IsPlayerInAnyVehicle(playerid) && PLAYER_DATA[playerid][p_vehicleid] != inCarData[PR_vehicleId])
+	    if(PLAYER_DATA[playerid][p_vehicleid] != inCarData[PR_vehicleId])
 	    {
 			ot_ReturnCallback(playerid, CHEAT_CARJACK);
 			return 0;
 		}
 	}
-    return 1;
+
+	return 1;
 }
 
 IPacket:SPECTATING_SYNC(playerid, BitStream:bs)
@@ -668,7 +683,7 @@ IPacket:SPECTATING_SYNC(playerid, BitStream:bs)
     BS_IgnoreBits(bs, 8);
     BS_ReadSpectatingSync(bs, spectatingData);
 
-    if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+    if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
     return 1;
 }
@@ -689,12 +704,12 @@ IRPC:VEHICLE_DESTROYED(playerid, BitStream:bs)
 
 public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 {
-	if (PLAYER_DATA[playerid][p_kicked] == true) return 0;
+	if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
 	/* Chat Flood */
 	if (rpcid == 101)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_CHAT][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_CHAT][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_CHAT][pac_immunity] && ANTICHEAT_INFO[FLOOD_CHAT][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_chat_message]) < 500)
 			{
@@ -713,7 +728,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 	/* Death Flood */
 	if (rpcid == 53)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_DEATH][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_DEATH][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_DEATH][pac_immunity] && ANTICHEAT_INFO[FLOOD_DEATH][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_death]) < 500)
 			{
@@ -732,7 +747,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 	/* Enter Vehicle Flood */
 	if (rpcid == 26)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_ENTER_VEH][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_ENTER_VEH][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_ENTER_VEH][pac_immunity] && ANTICHEAT_INFO[FLOOD_ENTER_VEH][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_enter_veh]) < 500)
 			{
@@ -751,7 +766,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 	/* Exit Vehicle Flood */
 	if (rpcid == 154)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_EXIT_VEH][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_EXIT_VEH][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_EXIT_VEH][pac_immunity] && ANTICHEAT_INFO[FLOOD_EXIT_VEH][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_exit_veh]) < 500)
 			{
@@ -770,7 +785,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 	/* Request Class Flood */
 	if (rpcid == 128)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_CLASS][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_CLASS][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_CLASS][pac_immunity] && ANTICHEAT_INFO[FLOOD_CLASS][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_request_class]) < 500)
 			{
@@ -789,7 +804,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 	/* Request Spawn Flood */
 	if (rpcid == 129)
 	{
-		if (ANTICHEAT_PLAYER[playerid][FLOOD_SPAWN][pac_immunity] == false && ANTICHEAT_INFO[FLOOD_SPAWN][ac_enabled] == true)
+		if (!ANTICHEAT_PLAYER[playerid][FLOOD_SPAWN][pac_immunity] && ANTICHEAT_INFO[FLOOD_SPAWN][ac_enabled])
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_request_spawn]) < 500)
 			{
@@ -818,7 +833,7 @@ public OnIncomingConnection(playerid, ip_address[], port)
 		BlockIpAddress(ip_address, 120000);
 	}
 
-	if (ANTICHEAT_PLAYER[playerid][CHEAT_LIMIT_SESSION][pac_immunity] == false && ANTICHEAT_INFO[CHEAT_LIMIT_SESSION][ac_enabled] == true)
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_LIMIT_SESSION][pac_immunity] && ANTICHEAT_INFO[CHEAT_LIMIT_SESSION][ac_enabled])
 	{
 		new 
 			temp_ip[16],
@@ -907,6 +922,47 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 #define OnPlayerStateChange OT_OnPlayerStateChange
 #if defined OT_OnPlayerStateChange
 	forward OT_OnPlayerStateChange();
+#endif
+
+
+public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
+{
+	/* Dialog Crasher */
+	if(!isnull(inputtext))
+    {
+        for(new i = 0; i != strlen(inputtext); i ++)
+        {
+            if(inputtext[i] == '%') inputtext[i] = '#';
+        }
+    }
+
+	/* Dialog Hack */
+	if(!ANTICHEAT_PLAYER[playerid][CHEAT_DIALOGS][pac_immunity] && ANTICHEAT_INFO[CHEAT_DIALOGS][ac_enabled])
+	{
+		if(PLAYER_DATA[playerid][p_dialog] != dialogid)
+		{
+			ot_ReturnCallback(playerid, CHEAT_DIALOGS);
+			return 0;
+		}
+	}
+
+	PLAYER_DATA[playerid][p_dialog] = -1;
+
+	#if defined OT_OnDialogResponse
+		return OT_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
+	#else
+		return 1;
+	#endif
+}
+
+#if defined _ALS_OnDialogResponse
+	#undef OnDialogResponse
+#else
+	#define _ALS_OnDialogResponse
+#endif
+#define OnDialogResponse ot_OnDialogResponse
+#if defined OT_OnDialogResponse
+	forward OT_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
 #endif
 
 /* Fixed Functions */
@@ -1029,9 +1085,19 @@ stock ot_ResetPlayerMoney(playerid)
 
 stock ot_UsePlayerPedAnims()
 {
-	pedAnims = true;
-	UsePlayerPedAnims();
-	return 1;
+	ot_pedAnims = true;
+	return UsePlayerPedAnims();
+}
+
+stock ot_ShowPlayerDialog(playerid, dialogid, style, caption[], info[], button1[], button2[])
+{
+	if(ShowPlayerDialog(playerid, dialogid, style, caption, info, button1, button2))
+	{
+		PLAYER_DATA[playerid][p_dialog] = dialogid;
+		return 1;
+	}
+
+	return 0;
 }
 
 
@@ -1153,3 +1219,11 @@ stock ot_UsePlayerPedAnims()
 	#define _ALS_UsePlayerPedAnims
 #endif
 #define UsePlayerPedAnims ot_UsePlayerPedAnims
+
+
+#if defined _ALS_ShowPlayerDialog
+	#undef ShowPlayerDialog
+#else
+	#define _ALS_ShowPlayerDialog
+#endif
+#define ShowPlayerDialog ot_ShowPlayerDialog
