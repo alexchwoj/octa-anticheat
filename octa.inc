@@ -945,7 +945,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 	PLAYER_DATA[playerid][p_dialog] = -1;
 
 	#if defined OT_OnDialogResponse
-		return OT_OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]);
+		return OT_OnDialogResponse(playerid, dialogid, response, listitem, inputtext);
 	#else
 		return 1;
 	#endif
