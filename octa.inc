@@ -221,12 +221,12 @@ public OnGameModeInit()
 #endif
 
 /* Player Callbacks */
-public OnPlayerDisconnect(playerid)
+public OnPlayerDisconnect(playerid, reason)
 {
 	ot_ResetPlayerVariables(playerid);
 
 	#if defined OT_OnPlayerDisconnect
-		return OT_OnPlayerDisconnect(playerid);
+		return OT_OnPlayerDisconnect(playerid, reason);
 	#else
 		return 1;
 	#endif
@@ -239,7 +239,7 @@ public OnPlayerDisconnect(playerid)
 
 #define OnPlayerDisconnect OT_OnPlayerDisconnect
 #if defined OT_OnPlayerDisconnect
-	forward OT_OnPlayerDisconnect(playerid);
+	forward OT_OnPlayerDisconnect(playerid, reason);
 #endif
 
 /* Utils */
@@ -904,7 +904,7 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 	}
 	
 	#if defined OT_OnPlayerStateChange
-		return OT_OnPlayerStateChange();
+		return OT_OnPlayerStateChange(playerid, newstate, oldstate);
 	#else
 		return 1;
 	#endif
@@ -917,7 +917,7 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 
 #define OnPlayerStateChange OT_OnPlayerStateChange
 #if defined OT_OnPlayerStateChange
-	forward OT_OnPlayerStateChange();
+	forward OT_OnPlayerStateChange(playerid, newstate, oldstate);
 #endif
 
 
@@ -980,7 +980,7 @@ stock ot_SetPlayerInterior(playerid, interiorid)
 
 stock ot_SetPlayerVirtualWorld(playerid, worldid)
 {
-	PLAYER_DATA[playerid][p_virtual_world] = worldid
+	PLAYER_DATA[playerid][p_virtual_world] = worldid;
 	SetPlayerVirtualWorld(playerid, worldid);
 	return 1;
 }
@@ -1095,6 +1095,26 @@ stock ot_ShowPlayerDialog(playerid, dialogid, style, caption[], info[], button1[
 
 	return 0;
 }
+
+/* y_dialog hooked function */
+#if defined _INC_y_dialog
+	stock ot_Dialog_Show(playerid, style, string:title[], string:caption[], string:button1[], string:button2[] = "", dialog = -1)
+	{
+		if(0 <= playerid < MAX_PLAYERS)
+		{
+			PLAYER_DATA[playerid][p_dialog] = dialog;
+		}
+
+		return Dialog_Show(playerid, style, title, caption, button1, button2, dialog);
+	}
+
+	#if defined _ALS_Dialog_Show
+		#undef Dialog_Show
+	#else
+		#define _ALS_Dialog_Show
+	#endif
+	#define Dialog_Show ot_Dialog_Show
+#endif
 
 
 #if defined _ALS_SetPlayerPos
