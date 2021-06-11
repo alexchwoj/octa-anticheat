@@ -55,7 +55,7 @@ forward OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections
                 ((!(%1[0])) || (((%1[0]) == '\1') && (!(%1[1]))))
 #endif
 
-const 
+static const 
 	PLAYER_SYNC = 207,
 	AIM_SYNC = 203,
 	WEAPONS_UPDATE_SYNC = 204,
@@ -66,7 +66,7 @@ const
 	VEHICLE_DESTROYED = 136
 ;
 
-enum
+static enum
 {
 	CHEAT_SPECIAL_ACTION,
 	CHEAT_FLY,
@@ -104,43 +104,43 @@ enum ac_info
 
 new ANTICHEAT_INFO[][ac_info] =
 {
-	{"special action", true},
-	{"fly", true},
-	{"invalid camera crasher", false},
-	{"bullet crasher", true},
-	{"speed", true},
-	{"chat flood", true},
-	{"death flood", true},
-	{"enter vehicle flood", true},
-	{"exit vehicle flood", true},
-	{"request class flood", true},
-	{"request spawn flood", true},
-	{"teleport", true},
-	{"unfreeze", true},
-	{"invisible surfing", true},
-	{"invisible aim", true},
-	{"spec", true},
-	{"weapon", true},
-	{"ammo", true},
-	{"fake bullet", true},
-	{"unoccupied crasher", true},
-	{"enter crasher", true},
-	{"money", true},
-	{"exceed maximum players in one ip", true},
-	{"car jack", true},
-	{"fake bullet position", true},
-	{"dialog spoofing", true}
+	{ !"special action", true },
+	{ !"fly", true },
+	{ !"invalid camera crasher", false },
+	{ !"bullet crasher", true },
+	{ !"speed", true },
+	{ !"chat flood", true },
+	{ !"death flood", true },
+	{ !"enter vehicle flood", true },
+	{ !"exit vehicle flood", true },
+	{ !"request class flood", true },
+	{ !"request spawn flood", true },
+	{ !"teleport", true },
+	{ !"unfreeze", true },
+	{ !"invisible surfing", true },
+	{ !"invisible aim", true },
+	{ !"spec", true },
+	{ !"weapon", true },
+	{ !"ammo", true },
+	{ !"fake bullet", true },
+	{ !"unoccupied crasher", true },
+	{ !"enter crasher", true },
+	{ !"money", true },
+	{ !"exceed maximum players in one ip", true },
+	{ !"car jack", true },
+	{ !"fake bullet position", true },
+	{ !"dialog spoofing", true }
 };
 
-enum ac_player
+static enum ac_player
 {
-	pac_detections, // Total of anticheat detections
-	pac_last_detection, // time of last detection
-	bool:pac_immunity // true = skip, false = call OnCheatDetected 
+	pac_detections, 	// Total of anticheat detections
+	pac_last_detection, // Time of last detection
+	bool:pac_immunity 	// true = skip, false = call OnCheatDetected 
 };
-new ANTICHEAT_PLAYER[MAX_PLAYERS][ sizeof(ANTICHEAT_INFO) ][ac_player];
+static ANTICHEAT_PLAYER[MAX_PLAYERS][ sizeof(ANTICHEAT_INFO) ][ac_player];
 
-enum data_player
+static enum data_player
 {
 	bool:p_kicked,
 	Float:p_position[3],
@@ -165,17 +165,17 @@ enum data_player
 	p_money,
 	p_dialog
 }
-new PLAYER_DATA[MAX_PLAYERS][data_player];
+static PLAYER_DATA[MAX_PLAYERS][data_player];
 
-enum weapons_player
+static enum weapons_player
 {
 	bool:w_valid,
 	w_id,
 	w_ammo
 };
-new PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
+static PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
 
-new bool:ot_pedAnims = false;
+static bool:ot_pedAnims = false;
 
 stock ot_ResetPlayerVariables(playerid)
 {
@@ -269,17 +269,22 @@ stock ot_CheatKick(playerid, cheat_id)
 {
 	if (!PLAYER_DATA[playerid][p_kicked])
 	{
-		new str_text[128];
-		format(str_text, sizeof(str_text), "[OCTA]{FFFFFF} You were kicked out of the server for: %s", ANTICHEAT_INFO[cheat_id][ac_name]);
-		SendClientMessage(playerid, 0x0090FFFF, str_text);
-		SetTimerEx("ot_Kick", 100, false, "i", playerid);
+		static const fmt_str[] = "[OCTA]{FFFFFF} You were kicked out of the server for: %s";
+    	new string[sizeof(fmt_str) + (-2 + 64)];
+
+		strunpack(string, ANTICHEAT_INFO[cheat_id][ac_name], sizeof(string));
+    	format(string, sizeof(string), fmt_str, string);
+
+		SendClientMessage(playerid, 0x0090FFFF, string);
+
+		SetTimerEx("@ot_Kick", 100, false, "i", playerid);
 		PLAYER_DATA[playerid][p_kicked] = true;
 	}
 	return 1;
 }
 
-forward ot_Kick(playerid);
-public ot_Kick(playerid)
+@ot_Kick(playerid);
+@ot_Kick(playerid)
 {
 	return Kick(playerid);
 }
@@ -287,12 +292,16 @@ public ot_Kick(playerid)
 stock ot_ReturnCallback(playerid, cheat_id)
 {
 	ANTICHEAT_PLAYER[playerid][cheat_id][pac_last_detection] = gettime();
-	ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections] ++;
+	++ ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections];
 
 	#if defined DEBUG
-		new name[MAX_PLAYER_NAME];
+		new
+			name[MAX_PLAYER_NAME],
+			cheat_name[64]
+		;
+		strunpack(cheat_name, ANTICHEAT_INFO[cheat_id][ac_name], sizeof(cheat_name));
 		GetPlayerName(playerid, name, sizeof(name));
-		printf("[OCTA DETECTION] %s(%i): %s (%d detections)", name, playerid, ANTICHEAT_INFO[cheat_id][ac_name], ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
+		printf("[OCTA DETECTION] %s(%i): %s (%d detections)", name, playerid, cheat_name, ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections]);
 	#endif
 
 	#if defined OnCheatDetected
@@ -695,7 +704,7 @@ IRPC:VEHICLE_DESTROYED(playerid, BitStream:bs)
         return 0;
     }
 
-    return OnVehicleRequestDeath(vehicleid, playerid);
+    return @OnVehicleRequestDeath(vehicleid, playerid);
 }
 
 public OnIncomingRPC(playerid, rpcid, BitStream:bs)
@@ -709,7 +718,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_chat_message]) < 500)
 			{
-				PLAYER_DATA[playerid][p_chat_flood_attemps] ++;
+				++ PLAYER_DATA[playerid][p_chat_flood_attemps];
 
 				if (PLAYER_DATA[playerid][p_chat_flood_attemps] >= MAX_CHAT_FLOOD)
 				{
@@ -728,7 +737,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_death]) < 500)
 			{
-				PLAYER_DATA[playerid][p_death_flood_attemps] ++;
+				++ PLAYER_DATA[playerid][p_death_flood_attemps];
 
 				if (PLAYER_DATA[playerid][p_death_flood_attemps] >= MAX_DEATH_FLOOD)
 				{
@@ -747,7 +756,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_enter_veh]) < 500)
 			{
-				PLAYER_DATA[playerid][p_enter_veh_attemps] ++;
+				++ PLAYER_DATA[playerid][p_enter_veh_attemps];
 
 				if (PLAYER_DATA[playerid][p_enter_veh_attemps] >= MAX_ENTER_VEH_FLOOD)
 				{
@@ -766,7 +775,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_exit_veh]) < 500)
 			{
-				PLAYER_DATA[playerid][p_exit_veh_attemps] ++;
+				++ PLAYER_DATA[playerid][p_exit_veh_attemps];
 
 				if (PLAYER_DATA[playerid][p_exit_veh_attemps] >= MAX_EXIT_VEH_FLOOD)
 				{
@@ -785,7 +794,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_request_class]) < 500)
 			{
-				PLAYER_DATA[playerid][p_class_attemps] ++;
+				++ PLAYER_DATA[playerid][p_class_attemps];
 
 				if (PLAYER_DATA[playerid][p_class_attemps] >= MAX_CLASS_FLOOD)
 				{
@@ -804,7 +813,7 @@ public OnIncomingRPC(playerid, rpcid, BitStream:bs)
 		{
 			if ((GetTickCount() - PLAYER_DATA[playerid][p_last_request_spawn]) < 500)
 			{
-				PLAYER_DATA[playerid][p_spawn_attemps] ++;
+				++ PLAYER_DATA[playerid][p_spawn_attemps];
 
 				if (PLAYER_DATA[playerid][p_spawn_attemps] >= MAX_SPAWN_FLOOD)
 				{
@@ -854,8 +863,8 @@ public OnIncomingConnection(playerid, ip_address[], port)
 	return 1;
 }
 
-forward OnVehicleRequestDeath(vehicleid, killerid);
-public OnVehicleRequestDeath(vehicleid, killerid)
+@OnVehicleRequestDeath(vehicleid, killerid);
+@OnVehicleRequestDeath(vehicleid, killerid)
 {
     new Float:health;
 

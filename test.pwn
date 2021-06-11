@@ -25,9 +25,13 @@ public OnPlayerDeath(playerid, killerid, reason)
 
 public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 {
-	//new str_text[128];
-	//format(str_text, sizeof(str_text), "[{939393}%i{FFFFFF}] Cheat Detected: {EE5454}%s{FFFFFF} - Detections: {EFD755}%d", playerid, cheat_name, cheat_detections);
-	//SendClientMessageToAll(-1, str_text);
+	static const fmt_str[] = "[{939393}%i{FFFFFF}] Cheat Detected: {EE5454}%s{FFFFFF} - Detections: {EFD755}%d";
+	new string[sizeof(fmt_str) + (-2 + 64) + (-2 + 8)];
+
+	strunpack(string, ANTICHEAT_INFO[cheat_id][ac_name], sizeof(string));
+	format(string, sizeof(string), fmt_str, playerid, string, cheat_detections);
+
+	SendClientMessageToAll(-1, string);
 	ot_CheatKick(playerid, cheat_id);
 	return 1;
 }
