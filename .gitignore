@@ -16,3 +16,13 @@
 # Log files
 *.txt
 *.log
+
+# Test server
+*.cfg
+scriptfiles/
+plugins/
+gamemodes/
+filterscripts/
+compiler/
+.vscode
+commit.bat

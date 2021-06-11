@@ -1,6 +1,6 @@
 /*
 * Octa AntiCheat
-* Developed by Atom
+* Developed by Atom, Heix
 * GitHub: github.com/RealAtom
 */
 
@@ -370,6 +370,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 					return 0;
 	            }
 	        }
+
 	        case 958, 959:
 	        {
 	        	if (onFootData[PR_weaponId] != WEAPON_PARACHUTE)
@@ -378,6 +379,7 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 					return 0;
 				}
 	        }
+
 	        case 1538, 1539, 1543:
 	        {
 	        	if (onFootData[PR_position][2] > 1.0)
@@ -407,18 +409,18 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 		new animlib[16], animname[32];
 		GetAnimationName(onFootData[PR_animationId], animlib, sizeof(animlib), animname, sizeof(animname));
 
-		if(!strcmp(animname, "GUNCROUCHFWD") && (floatabs(onFootData[PR_velocity][0]) > 0.08 || floatabs(onFootData[PR_velocity][1]) > 0.08))
+		if (!strcmp(animname, "GUNCROUCHFWD") && (floatabs(onFootData[PR_velocity][0]) > 0.08 || floatabs(onFootData[PR_velocity][1]) > 0.08))
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
 		}
 
-		if(!ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
+		if (!ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
 		}
-		else if(ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
+		else if (ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
 		{
 			ot_ReturnCallback(playerid, CHEAT_SPEED);
 			return 0;
@@ -562,7 +564,6 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
     return 1;
 }
 
-
 IPacket:BULLET_SYNC(playerid, BitStream:bs)
 {
     new bulletData[PR_BulletSync];
@@ -608,7 +609,7 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
  
     if (PLAYER_DATA[playerid][p_kicked]) return 0;
 
-    //thx https://vk.com/franzesco and https://vk.com/dataflex
+    // thx https://vk.com/franzesco and https://vk.com/dataflex
     if (!ANTICHEAT_PLAYER[playerid][CRASHER_UNOCCUPIED][pac_immunity] && ANTICHEAT_INFO[CRASHER_UNOCCUPIED][ac_enabled])
 	{
 	    if ((floatabs(unoccupiedData[PR_roll][0]) > 1.0) ||
@@ -633,7 +634,7 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
 	    }
 	}
 
-	//thx f0Re3t and Nexius
+	// thx f0Re3t and Nexius
 	if (!ANTICHEAT_PLAYER[playerid][CRASHER_ENTER][pac_immunity] && ANTICHEAT_INFO[CRASHER_ENTER][ac_enabled])
 	{
 		if ((unoccupiedData[PR_roll][0] == unoccupiedData[PR_direction][0]) && (unoccupiedData[PR_roll][1] == unoccupiedData[PR_direction][1]) && (unoccupiedData[PR_roll][2] == unoccupiedData[PR_direction][2]))
@@ -647,7 +648,7 @@ IPacket:UNOCCUPIED_SYNC(playerid, BitStream:bs)
 
 IPacket:VEHICLE_SYNC(playerid, BitStream:bs)
 {
-	if(!IsPlayerInAnyVehicle(playerid)) return 0;
+	if (!IsPlayerInAnyVehicle(playerid)) return 0;
 
     new inCarData[PR_InCarSync];
 
@@ -662,13 +663,12 @@ IPacket:VEHICLE_SYNC(playerid, BitStream:bs)
 
     if (!ANTICHEAT_PLAYER[playerid][CHEAT_CARJACK][pac_immunity] && ANTICHEAT_INFO[CHEAT_CARJACK][ac_enabled])
 	{
-	    if(PLAYER_DATA[playerid][p_vehicleid] != inCarData[PR_vehicleId])
+	    if (PLAYER_DATA[playerid][p_vehicleid] != inCarData[PR_vehicleId])
 	    {
 			ot_ReturnCallback(playerid, CHEAT_CARJACK);
 			return 0;
 		}
 	}
-
 	return 1;
 }
 
@@ -838,7 +838,7 @@ public OnIncomingConnection(playerid, ip_address[], port)
 
 		for(new i = 0, j = GetPlayerPoolSize(); i <= j; i++)
 		{
-			if(IsPlayerConnected(i))
+			if (IsPlayerConnected(i))
 			{
 			    GetPlayerIp(i, temp_ip, 16);
 			    if (!strcmp(temp_ip, ip_address)) count ++;
@@ -924,18 +924,18 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 {
 	/* Dialog Crasher */
-	if(!isnull(inputtext))
+	if (!isnull(inputtext))
     {
         for(new i = 0; i != strlen(inputtext); i ++)
         {
-            if(inputtext[i] == '%') inputtext[i] = '#';
+            if (inputtext[i] == '%') inputtext[i] = '#';
         }
     }
 
 	/* Dialog Hack */
-	if(!ANTICHEAT_PLAYER[playerid][CHEAT_DIALOGS][pac_immunity] && ANTICHEAT_INFO[CHEAT_DIALOGS][ac_enabled])
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_DIALOGS][pac_immunity] && ANTICHEAT_INFO[CHEAT_DIALOGS][ac_enabled])
 	{
-		if(PLAYER_DATA[playerid][p_dialog] != dialogid)
+		if (PLAYER_DATA[playerid][p_dialog] != dialogid)
 		{
 			ot_ReturnCallback(playerid, CHEAT_DIALOGS);
 			return 0;
@@ -1087,12 +1087,11 @@ stock ot_UsePlayerPedAnims()
 
 stock ot_ShowPlayerDialog(playerid, dialogid, style, caption[], info[], button1[], button2[])
 {
-	if(ShowPlayerDialog(playerid, dialogid, style, caption, info, button1, button2))
+	if (ShowPlayerDialog(playerid, dialogid, style, caption, info, button1, button2))
 	{
 		PLAYER_DATA[playerid][p_dialog] = dialogid;
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -1100,7 +1099,7 @@ stock ot_ShowPlayerDialog(playerid, dialogid, style, caption[], info[], button1[
 #if defined _INC_y_dialog
 	stock ot_Dialog_Show(playerid, style, string:title[], string:caption[], string:button1[], string:button2[] = "", dialog = -1)
 	{
-		if(0 <= playerid < MAX_PLAYERS)
+		if (0 <= playerid < MAX_PLAYERS)
 		{
 			PLAYER_DATA[playerid][p_dialog] = dialog;
 		}

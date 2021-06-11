@@ -1,7 +1,9 @@
+#pragma option -(+
+#pragma option -;+
+#pragma option -O1
+
 #include <a_samp>
-#include <core>
-#include <float>
-#include <octa>
+#include "../octa.inc" // This is for test, you need use: #include <octa>
 
 main()
 {
@@ -10,7 +12,7 @@ main()
 
 public OnPlayerConnect(playerid)
 {
-	GameTextForPlayer(playerid,"~w~Octa~r~ AntiCheat", 5000, 5);
+	GameTextForPlayer(playerid,"~b~Octa~w~ AntiCheat", 5000, 5);
 	ResetPlayerWeapons(playerid);
 	return 1;
 }
