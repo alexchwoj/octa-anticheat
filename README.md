@@ -15,7 +15,7 @@ Octa is a powerful anti-cheat service that counteracts cheating in San Andreas M
 
 2. Put the `octa.pwn` file in `pawno/include`
 
-3. Enter this line in your initial script (remember that it must go before any other and after a_samp)
+3. Enter this line in your initial script
 
 ```pawn
 
@@ -29,7 +29,7 @@ Octa is a powerful anti-cheat service that counteracts cheating in San Andreas M
 
 ## Usage
 
-Octa calls a function when a cheating attempt is detected, this function contains the identifier number of the cheat and that of the player. In the `test.pwn` file you have a usage example.
+Octa calls a function when a cheating attempt is detected, this function contains the identifier number of the cheat and ID of the player. In the `test.pwn` file you have a usage example.
 
   
 
