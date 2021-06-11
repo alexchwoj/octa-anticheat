@@ -15,9 +15,7 @@
 /* Config */
 #define OCTA_VERSION "0.0.1"
 
-#if !defined DEBUG
-	#define DEBUG 
-#endif
+#define OCTA_DEBUG
 
 #if !defined MAX_CHAT_FLOOD
 	#define MAX_CHAT_FLOOD			3
@@ -294,7 +292,7 @@ stock ot_ReturnCallback(playerid, cheat_id)
 	ANTICHEAT_PLAYER[playerid][cheat_id][pac_last_detection] = gettime();
 	++ ANTICHEAT_PLAYER[playerid][cheat_id][pac_detections];
 
-	#if defined DEBUG
+	#if defined OCTA_DEBUG
 		new
 			name[MAX_PLAYER_NAME],
 			cheat_name[64]
@@ -831,7 +829,7 @@ public OnIncomingConnection(playerid, ip_address[], port)
 {
 	if (!( 0 <= playerid < MAX_PLAYERS ))
 	{
-		#if defined DEBUG
+		#if defined OCTA_DEBUG
 			printf("[OCTA DETECTION] %s:%d > Invalid PlayerID", ip_address, port);
 		#endif
 
@@ -872,7 +870,7 @@ public OnIncomingConnection(playerid, ip_address[], port)
 
     if (health >= 250.0)
     {
-    	#if defined DEBUG
+    	#if defined OCTA_DEBUG
 			new name[MAX_PLAYER_NAME];
 			GetPlayerName(killerid, name, sizeof(name));
 			printf("[OCTA DETECTION] %s(%i): Vehicle Spawn", name, killerid);
