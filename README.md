@@ -145,7 +145,7 @@ GetPlayerLastDetection(playerid, cheat_id);
 *  [katursis](https://github.com/katursis) - [Pawn.RakNet](https://github.com/katursis/Pawn.RakNet/)
 
 ### Were you about to copy and paste all my work? Quite there ruffian, you have to know something!
-This is an old and discontinued version of Octa Anti-Cheat, it is more than 1 year out of date compared to the current version used in Hyaxe, but who knows, maybe it will be useful for someone!
+This is an old and discontinued version of Octa Anti-Cheat, it is more than 1 year out of date compared to the current version used in Hyaxe, but who knows, maybe it will be useful for someone! PD: Give a star...
 
 ### Discord
 
