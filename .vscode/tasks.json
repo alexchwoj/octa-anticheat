@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"type": "shell",
+	"command": "compiler/pawncc.exe",
+	"problemMatcher": "$pawncc",
+	"presentation": {
+		"reveal": "always",
+		"focus": true,
+		"panel": "dedicated",
+		"clear": true
+	},
+	"tasks": [
+		{
+			"label": "Build Octa AntiCheat",
+			"args": [
+				"\"gamemodes/test.pwn\"",
+				"\"-icompiler/include\"",
+				"\"-ogamemodes\\test.amx\""
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}

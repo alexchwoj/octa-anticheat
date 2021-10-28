@@ -1,9 +1,12 @@
 #pragma option -(+
 #pragma option -;+
-#pragma option -O1
+//#pragma option -O1
+#pragma option -d3
 
 #include <a_samp>
-#include "../octa.inc" // This is for test, you need use: #include <octa>
+#include <crashdetect>
+#include "../../octa-anticheat.inc"
+#include "../../octa-damage.inc"
 
 main()
 {
@@ -32,7 +35,7 @@ public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 	format(string, sizeof(string), fmt_str, playerid, string, cheat_detections);
 
 	SendClientMessageToAll(-1, string);
-	ot_CheatKick(playerid, cheat_id);
+	//ot_CheatKick(playerid, cheat_id);
 	return 1;
 }
 
@@ -44,7 +47,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		return 1;
 	}
 
-	if (strcmp("/testveh", cmdtext, true, 10) == 0)
+	if (strcmp("/infernus", cmdtext, true, 10) == 0)
 	{
 		CreateVehicle(411, 1589.339843, -1054.775756, 23.633340, 90.0, -1, -1, 0, 0);
 		return 1;

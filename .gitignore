@@ -21,8 +21,8 @@
 *.cfg
 scriptfiles/
 plugins/
-gamemodes/
+gamemodes/*.amx
 filterscripts/
 compiler/
-.vscode
+!.vscode/tasks.json
 commit.bat
