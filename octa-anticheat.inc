@@ -224,6 +224,17 @@ new const
 
 static bool:ot_pedAnims = false; // Server animation type (ped or CJ)
 
+// Tick difference
+static GetTickDiff(newtick, oldtick)
+{
+	if (oldtick < 0 && newtick >= 0) {
+		return newtick - oldtick;
+	} else if (oldtick >= 0 && newtick < 0 || oldtick > newtick) {
+		return (cellmax - oldtick + 1) - (cellmin - newtick);
+	}
+	return newtick - oldtick;
+}
+
 // Reset all player data
 stock ot_ResetPlayerVariables(playerid)
 {
@@ -686,22 +697,29 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 	// Ammo hack
 	if (!ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled])
 	{
-		if (onFootData[PR_weaponId] && onFootData[PR_weaponId] != 46)
+		if ((ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_last_detection] + 1) < gettime())
 		{
-		    new 
-		    	weapon_slot = GetWeaponSlot(onFootData[PR_weaponId]),
-		    	weapon_id,
-		    	weapon_ammo
-			;
-
-			GetPlayerWeaponData(playerid, weapon_slot, weapon_id, weapon_ammo);
-			if (weapon_ammo > (PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] + 10) || weapon_ammo < -1)
+			if (onFootData[PR_weaponId] && onFootData[PR_weaponId] != 46)
 			{
-				ot_ReturnCallback(playerid, CHEAT_AMMO);
-				return 0;
-			}
+				new 
+					weapon_slot = GetWeaponSlot(onFootData[PR_weaponId]),
+					weapon_id,
+					weapon_ammo
+				;
 
-			PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] = weapon_ammo;
+				GetPlayerWeaponData(playerid, weapon_slot, weapon_id, weapon_ammo);
+				if (weapon_ammo > (PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] + 10) || weapon_ammo < -1)
+				{
+					ot_RegisterDetection(playerid, CHEAT_AMMO);
+
+					if (ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_detections] >= 2)
+						ot_ReturnCallback(playerid, CHEAT_AMMO);
+
+					return 0;
+				}
+
+				PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] = weapon_ammo;
+			}
 		}
 	}
 	return 1;
@@ -730,6 +748,13 @@ IPacket:AIM_SYNC(playerid, BitStream:bs)
 			ot_ReturnCallback(playerid, CHEAT_INVISIBLE_AIM);
 			return 0;
     	}
+	}
+
+	/* NoReload */
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_NORELOAD][pac_immunity] && ANTICHEAT_INFO[CHEAT_NORELOAD][ac_enabled])
+	{
+		if (aimData[PR_weaponState] == WEAPONSTATE_RELOADING || aimData[PR_weaponState] == WEAPONSTATE_NO_BULLETS)
+			PLAYER_DATA[playerid][p_bullets_fired] = 0;
 	}
     return 1;
 }
@@ -1258,9 +1283,16 @@ stock ot_TogglePlayerSpectating(playerid, toggle)
 stock ot_GivePlayerWeapon(playerid, weaponid, ammo)
 {
 	new slot = GetWeaponSlot(weaponid);
+	
+	if (PLAYER_WEAPONS[playerid][slot][w_valid] && PLAYER_WEAPONS[playerid][slot][w_id] == weaponid)
+		PLAYER_WEAPONS[playerid][slot][w_ammo] += ammo;
+	else PLAYER_WEAPONS[playerid][slot][w_ammo] = ammo;
+	
 	PLAYER_WEAPONS[playerid][slot][w_valid] = true;
 	PLAYER_WEAPONS[playerid][slot][w_id] = weaponid;
-	PLAYER_WEAPONS[playerid][slot][w_ammo] = ammo;
+	
+	PLAYER_DATA[playerid][p_bullets_fired] = 0;
+	ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_last_detection] = gettime();
 
 	GivePlayerWeapon(playerid, weaponid, ammo);
 	return 1;
@@ -1268,6 +1300,8 @@ stock ot_GivePlayerWeapon(playerid, weaponid, ammo)
 
 stock ot_SetPlayerAmmo(playerid, weaponslot, ammo)
 {
+	PLAYER_DATA[playerid][p_bullets_fired] = 0;
+	ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_last_detection] = gettime();
 	PLAYER_WEAPONS[playerid][weaponslot][w_ammo] = ammo;
 	SetPlayerAmmo(playerid, weaponslot, ammo);
 	return 1;

@@ -342,7 +342,6 @@ public OnPlayerGiveDamage(playerid, damagedid, Float:amount, weaponid, bodypart)
 
 	if (weaponid < (sizeof(gDefaultWeaponDamage) - 1))
 	{
-		printf("amount: %f, original: %f", amount, gDefaultWeaponDamage[weaponid]);
 		if (amount > gDefaultWeaponDamage[weaponid])
 		{
 			if (gettime() > g_iDamagerLastWarn[playerid])
