@@ -1,6 +1,7 @@
 /*
 * Octa AntiCheat
 * Developed by Atom, Heix
+* Thanks to: Deru, Vinter, Nahuel37
 * GitHub: github.com/RealAtom
 * Powered by Hyaxe
 */
@@ -14,7 +15,7 @@
 #include <Pawn.RakNet>
 
 /* Config */
-#define OCTA_VERSION "0.0.1"
+#define OCTA_VERSION "0.0.2"
 
 #define OCTA_DEBUG
 
@@ -265,7 +266,12 @@ stock ot_ResetPlayerVariables(playerid)
 /* Init */
 public OnGameModeInit()
 {
-	printf("Octa AntiCheat v"OCTA_VERSION" initialized successfully!");
+	printf("\n\t  ____  ______________ ");
+	printf("\t / __ \\/ ___/_  __/ _ |");
+	printf("\t/ /_/ / /__  / / / __ |");
+	printf("\t\\____/\\___/ /_/ /_/ |_|\n");
+
+	printf("Octa AntiCheat v"OCTA_VERSION" initialized successfully!\n");
 	
 	#if defined OT_OnGameModeInit
 		return OT_OnGameModeInit();
