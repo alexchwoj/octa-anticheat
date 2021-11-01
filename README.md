@@ -30,7 +30,7 @@ public OnCheatDetected(playerid, cheat_id, const cheat_name[], cheat_detections)
 ```
 
 ## Credits
-* [Atom](https://github.com/RealAtom) - Programming
+* [Atom](https://github.com/RealAtom) - Development leader
 * [leHeix](https://github.com/joseepe) - Provide help and programming
 * [katursis](https://github.com/katursis) - [Pawn.RakNet](https://github.com/katursis/Pawn.RakNet/)
 

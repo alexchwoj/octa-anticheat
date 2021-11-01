@@ -98,7 +98,9 @@ enum _:ac_cheats // Cheats types
 	CHEAT_LIMIT_SESSION,
 	CHEAT_CARJACK,
 	CRASHER_BULLET_POS,
-	CHEAT_DIALOGS
+	CHEAT_DIALOGS,
+	CHEAT_RAPIDFIRE,
+	CHEAT_NORELOAD
 };
 
 enum ac_info
@@ -134,7 +136,9 @@ new ANTICHEAT_INFO[][ac_info] =
 	{ !"exceed maximum players in one ip", true },
 	{ !"car jack", true },
 	{ !"fake bullet position", true },
-	{ !"dialog spoofing", true }
+	{ !"dialog spoofing", true },
+	{ !"rapidfire", true },
+	{ !"noreload", true }
 };
 
 enum _:ac_player
@@ -168,7 +172,10 @@ enum _:data_player // Local playe data
 	p_last_request_spawn,
 	p_spawn_attemps,
 	p_money,
-	p_dialog
+	p_dialog,
+	p_last_shot_tick,
+	p_last_weapon_fired,
+	p_bullets_fired
 }
 static PLAYER_DATA[MAX_PLAYERS][data_player];
 
@@ -179,6 +186,41 @@ enum _:weapons_player
 	w_ammo
 };
 static PLAYER_WEAPONS[MAX_PLAYERS][13][weapons_player];
+
+// Weapons info
+new const
+	gMinWeaponFiringTime[][] = {
+        { 150, 150 }, // 22 (Colt45)
+        { 340, 150 }, // 23 (Colt45 con silenciador)
+        { 150, 150 }, // 24 (Deagle)
+        { 800, 800 }, // 25 (Escopeta)
+        { 115, 115 }, // 26 (Escopetas recortadas)
+        { 200, 150 }, // 27 (Escopetas de combate)
+        { 20, 100 },  // 28 (Uzi)
+        { 70, 140 },  // 29 (MP5)
+        { 60, 140 },  // 30 (AK-47)
+        { 60, 140 },  // 31 (M4)
+        { 30, 140 },  // 32 (Tec-9)
+        { 800, 800 }, // 33 (Rifle)
+        { 800, 800 }  // 34 (Sniper)
+    },
+	gMaxBulletsPerRound[] = {
+        34, // 22 (Colt45)
+        17, // 23 (Colt45 con silenciador)
+        7,  // 24 (Desert Eagle)
+        1,  // 25 (Escopeta)
+        4,  // 26 (Escopetas recortadas)
+        7,  // 27 (Escopeta de combate)
+        100, // 28 (Uzi)
+        30, // 29 (MP5)
+        30, // 30 (AK-47)
+        50, // 31 (M4)
+        100, // 32 (Tec-9)
+        1, // 33 (Rifle)
+        2, // 34 (Sniper)
+        0, // Arma inválida
+    }
+;
 
 static bool:ot_pedAnims = false; // Server animation type (ped or CJ)
 
@@ -372,6 +414,94 @@ stock GetPlayerLastDetection(playerid, cheat_id)
 }
 
 /* Cheat Detection */
+public OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY, Float:fZ)
+{
+	++PLAYER_DATA[playerid][p_bullets_fired];
+
+	/* NoReload */
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_NORELOAD][pac_immunity] && ANTICHEAT_INFO[CHEAT_NORELOAD][ac_enabled])
+	{
+		if (22 <= weaponid <= 34)
+        {
+            if (PLAYER_DATA[playerid][p_bullets_fired] > gMaxBulletsPerRound[weaponid - 22])
+            {
+                if ((ANTICHEAT_PLAYER[playerid][CHEAT_NORELOAD][pac_last_detection] + 2) < gettime())
+                    ANTICHEAT_PLAYER[playerid][CHEAT_NORELOAD][pac_detections] = 0;
+
+				ot_RegisterDetection(playerid, CHEAT_NORELOAD);
+
+				if (ANTICHEAT_PLAYER[playerid][CHEAT_NORELOAD][pac_detections] >= 3)
+					ot_ReturnCallback(playerid, CHEAT_NORELOAD);
+
+                return 0;
+            }
+        }
+	}
+
+	/* RapidFire */
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_immunity] && ANTICHEAT_INFO[CHEAT_RAPIDFIRE][ac_enabled])
+	{
+		if (PLAYER_DATA[playerid][p_last_weapon_fired] != weaponid)
+        	PLAYER_DATA[playerid][p_last_shot_tick] = 0;
+
+        PLAYER_DATA[playerid][p_last_weapon_fired] = weaponid;
+
+        if (weaponid < 35)
+        {
+			new diff = GetTickDiff(GetTickCount(), PLAYER_DATA[playerid][p_last_shot_tick]);
+			
+            if (GetPlayerState(playerid) == PLAYER_STATE_PASSENGER)
+            {
+                if (diff < gMinWeaponFiringTime[weaponid - 22][1])
+                {
+                    if ((ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_last_detection] + 2) < gettime())
+                    	ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_detections] = 0;
+                    
+                    ot_RegisterDetection(playerid, CHEAT_RAPIDFIRE);
+
+					if (ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_detections] >= 12)
+						ot_ReturnCallback(playerid, CHEAT_RAPIDFIRE);
+
+                    return 0;
+                }
+            }
+            else
+            {
+                if (diff < gMinWeaponFiringTime[weaponid - 22][0])
+                {
+                    if ((ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_last_detection] + 2) < gettime())
+                    	ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_detections] = 0;
+                    
+					ot_RegisterDetection(playerid, CHEAT_RAPIDFIRE);
+
+					if (ANTICHEAT_PLAYER[playerid][CHEAT_RAPIDFIRE][pac_detections] >= 10)
+						ot_ReturnCallback(playerid, CHEAT_RAPIDFIRE);
+
+                    return 0;
+                }
+            }
+        }
+	}
+
+	PLAYER_DATA[playerid][p_last_shot_tick] = GetTickCount();
+
+	#if defined OT_OnPlayerWeaponShot
+		return OT_OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY, Float:fZ);
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnPlayerWeaponShot
+	#undef OnPlayerWeaponShot
+#else
+	#define _ALS_OnPlayerWeaponShot
+#endif
+
+#define OnPlayerWeaponShot OT_OnPlayerWeaponShot
+#if defined OT_OnPlayerWeaponShot
+	forward OT_OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY, Float:fZ);
+#endif
+
 IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 {
 	if (PLAYER_DATA[playerid][p_kicked]) return 0;
@@ -446,23 +576,25 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 		// Animations with these IDs tend to increase speed for nothing, doing so will trigger the speedhack detection.
 		if (onFootData[PR_animationId] == 1130 || onFootData[PR_animationId] == 1062 || onFootData[PR_animationId] == 1132) return 1;
 
-		new animlib[16], animname[32];
+		new animlib[16], animname[32], bool:is_cheating;
 		GetAnimationName(onFootData[PR_animationId], animlib, sizeof(animlib), animname, sizeof(animname));
 
 		if (!strcmp(animname, "GUNCROUCHFWD") && (floatabs(onFootData[PR_velocity][0]) > 0.08 || floatabs(onFootData[PR_velocity][1]) > 0.08))
-		{
-			ot_ReturnCallback(playerid, CHEAT_SPEED);
-			return 0;
-		}
+			is_cheating = true;
 
 		if (!ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.23 || floatabs(onFootData[PR_velocity][1]) > 0.23)) 
-		{
-			ot_ReturnCallback(playerid, CHEAT_SPEED);
-			return 0;
-		}
+			is_cheating = true;
+		
 		else if (ot_pedAnims && (floatabs(onFootData[PR_velocity][0]) > 0.29 || floatabs(onFootData[PR_velocity][1]) > 0.29))
+			is_cheating = true;
+
+		if (is_cheating)
 		{
-			ot_ReturnCallback(playerid, CHEAT_SPEED);
+			ot_RegisterDetection(playerid, CHEAT_SPEED);
+
+			if (ANTICHEAT_PLAYER[playerid][CHEAT_SPEED][pac_detections] >= 4)
+				ot_ReturnCallback(playerid, CHEAT_SPEED);
+
 			return 0;
 		}
 	}
@@ -478,10 +610,14 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 				player_state = GetPlayerState(playerid)
 			;
 
-			switch(player_state)
+			if (Player_IsDead(playerid)) distance = 3.0;
+			else
 			{
-				case PLAYER_STATE_ONFOOT: limit_distance = 35.0;
-				case PLAYER_STATE_DRIVER, PLAYER_STATE_PASSENGER: limit_distance = 50.0;
+				switch(player_state)
+				{
+					case PLAYER_STATE_ONFOOT: limit_distance = 35.0;
+					case PLAYER_STATE_DRIVER, PLAYER_STATE_PASSENGER: limit_distance = 50.0;
+				}
 			}
 
 			if (distance > limit_distance || GetPlayerInterior(playerid) != PLAYER_DATA[playerid][p_interior])
@@ -546,6 +682,28 @@ IPacket:PLAYER_SYNC(playerid, BitStream:bs)
 			return 0;
 		}
 	}
+
+	// Ammo hack
+	if (!ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled])
+	{
+		if (onFootData[PR_weaponId] && onFootData[PR_weaponId] != 46)
+		{
+		    new 
+		    	weapon_slot = GetWeaponSlot(onFootData[PR_weaponId]),
+		    	weapon_id,
+		    	weapon_ammo
+			;
+
+			GetPlayerWeaponData(playerid, weapon_slot, weapon_id, weapon_ammo);
+			if (weapon_ammo > (PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] + 10) || weapon_ammo < -1)
+			{
+				ot_ReturnCallback(playerid, CHEAT_AMMO);
+				return 0;
+			}
+
+			PLAYER_WEAPONS[playerid][weapon_slot][w_ammo] = weapon_ammo;
+		}
+	}
 	return 1;
 }
 
@@ -594,22 +752,11 @@ IPacket:WEAPONS_UPDATE_SYNC(playerid, BitStream:bs)
 			{
 				if (!PLAYER_WEAPONS[playerid][i][w_valid])
 				{
+					SetPlayerArmedWeapon(playerid, 0);
 					ot_ReturnCallback(playerid, CHEAT_WEAPON);
 					return 0;
 				}
 			}
-		}
-
-		// Ammo hack
-		if (!ANTICHEAT_PLAYER[playerid][CHEAT_AMMO][pac_immunity] && ANTICHEAT_INFO[CHEAT_AMMO][ac_enabled])
-		{
-			new difference = (PLAYER_WEAPONS[playerid][i][w_ammo] - weaponsUpdate[PR_slotWeaponAmmo][i]);
-			if (difference > 10)
-			{
-				ot_ReturnCallback(playerid, CHEAT_AMMO);
-				return 0;
-			}
-			PLAYER_WEAPONS[playerid][i][w_ammo] = weaponsUpdate[PR_slotWeaponAmmo][i];
 		}
 	}
     return 1;
@@ -632,6 +779,13 @@ IPacket:BULLET_SYNC(playerid, BitStream:bs)
 			ot_ReturnCallback(playerid, CHEAT_FAKEBULLET);
 			return 0;
 		}
+	}
+
+	/* Damager */
+	if (bulletData[PR_hitType] == BULLET_HIT_TYPE_PLAYER && (bulletData[PR_weaponId] < WEAPON_COLT45 || bulletData[PR_weaponId] > WEAPON_SNIPER))
+	{
+		Kick(playerid);
+		return 0;
 	}
 
 	/* Bullet crasher */
