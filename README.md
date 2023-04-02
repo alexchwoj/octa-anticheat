@@ -1,6 +1,8 @@
 ![logo](https://i.imgur.com/RwQNuf4.png)
 Octa is a powerful anti-cheat service that counteracts cheating in San Andreas Multiplayer, using **Pawn.RakNet**, which makes it **faster** and more **effective** than any classic anti-cheat.
 
+⚠️ Warning: this project is no longer supported, I'm not going to update it anymore.
+
 ## Implementation
 1. Download the latest version in [releases](https://github.com/Hyaxe/octa-anticheat/releases)
 2. Put the Octa's Files file in `pawno/include`
